@@ -1,0 +1,8 @@
+venv/
+logs/
+certs/
+__pycache__/
+.idea
+*.db
+.env
+update.me
