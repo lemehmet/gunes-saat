@@ -5,6 +5,8 @@ FORCE_EMU = False # Forces running code in UI emulation even on RasPi
 USE_EMU = True if not RASPI else True if FORCE_EMU else False
 WIDTH = 128
 HEIGHT = 64
+BG=255
+FG=0
 
 print(f"Running on raspi: {RASPI}, using emu: {USE_EMU}")
 

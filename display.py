@@ -32,7 +32,7 @@ else:
         display_instance.handle_button_event(channel)(pressed=not GPIO.input(channel))
 
 
-class SaatDisplay:
+class OledDisplay:
     def __init__(self):
         global display_instance
         display_instance = self
@@ -73,6 +73,7 @@ class SaatDisplay:
                 GPIO.add_event_detect(button, GPIO.BOTH, callback=gpio_callback, bouncetime=20)
 
         self.clear()
+        print(f"Completed display init. {self.draw}")
 
 
     def handle_button_event(self, button):
@@ -114,38 +115,38 @@ class SaatDisplay:
 
     def on_button_a(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button A")
-        display.draw.ellipse((70, 40, 90, 60), outline=255, fill=1 if pressed else 0)  # A button
-        display.update()
+        self.draw.ellipse((70, 40, 90, 60), outline=255, fill=1 if pressed else 0)  # A button
+        self.update()
 
     def on_button_b(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button B")
-        display.draw.ellipse((100, 20, 120, 40), outline=255, fill=1 if pressed else 0)  # B button
-        display.update()
+        self.draw.ellipse((100, 20, 120, 40), outline=255, fill=1 if pressed else 0)  # B button
+        self.update()
 
     def on_button_c(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button C")
-        display.draw.rectangle((20, 22, 40, 40), outline=255, fill=1 if pressed else 0)  # center
-        display.update()
+        self.draw.rectangle((20, 22, 40, 40), outline=255, fill=1 if pressed else 0)  # center
+        self.update()
 
     def on_button_up(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button UP")
-        display.draw.polygon([(20, 20), (30, 2), (40, 20)], outline=255, fill=1 if pressed else 0)  # Up
-        display.update()
+        self.draw.polygon([(20, 20), (30, 2), (40, 20)], outline=255, fill=1 if pressed else 0)  # Up
+        self.update()
 
     def on_button_down(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button DOWN")
-        display.draw.polygon([(30, 60), (40, 42), (20, 42)], outline=255, fill=1 if pressed else 0)  # down
-        display.update()
+        self.draw.polygon([(30, 60), (40, 42), (20, 42)], outline=255, fill=1 if pressed else 0)  # down
+        self.update()
 
     def on_button_left(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button LEFT")
-        display.draw.polygon([(0, 30), (18, 21), (18, 41)], outline=255, fill=1 if pressed else 0)  # left
-        display.update()
+        self.draw.polygon([(0, 30), (18, 21), (18, 41)], outline=255, fill=1 if pressed else 0)  # left
+        self.update()
 
     def on_button_right(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button RIGHT")
-        display.draw.polygon([(60, 30), (42, 21), (42, 41)], outline=255, fill=1 if pressed else 0)  # right
-        display.update()
+        self.draw.polygon([(60, 30), (42, 21), (42, 41)], outline=255, fill=1 if pressed else 0)  # right
+        self.update()
 
     def paint(self):
         if config.USE_EMU:
@@ -154,10 +155,10 @@ class SaatDisplay:
             ibuffer = []
             for b in pilbuffer:
                 for i in range(8):
-                    ibuffer.append(255 if b & 0x80 else 0)
+                    ibuffer.append(0 if b & 0x80 else 255)
                     b <<= 1
             frame = b''.join(list(map(lambda x: six.int2byte(x), ibuffer)))
-            image = pyglet.image.ImageData(self.pilimg.width, self.pilimg.height, 'G', frame, pitch = -self.pilimg.width * 1)
+            image = pyglet.image.ImageData(self.pilimg.width, self.pilimg.height, 'L', frame, pitch = -self.pilimg.width * 1)
             image.anchor_x = image.width // 2
             image.anchor_y = image.height // 2
             self.background.blit_tiled(0, 0, 0, self.window.width, self.window.height)
@@ -177,7 +178,7 @@ class SaatDisplay:
 
 if __name__ == "__main__":
     print("Starting saat display test")
-    display = SaatDisplay()
+    display = OledDisplay()
     display.draw.polygon([(20, 20), (30, 2), (40, 20)], outline=255, fill=0)  # Up
     display.draw.polygon([(0, 30), (18, 21), (18, 41)], outline=255, fill=0)  # left
     display.draw.polygon([(60, 30), (42, 21), (42, 41)], outline=255, fill=0) # right
