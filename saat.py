@@ -25,6 +25,7 @@ class Saat(display.OledDisplay):
     def wp_update(self):
         self.wp_background()
         self.wp_debug()
+        self.update()
 
     def on_button_a(self, pressed):
         print(f"Saat::A(pressed={pressed})")
