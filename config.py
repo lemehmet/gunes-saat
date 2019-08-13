@@ -10,8 +10,8 @@ print(f"Running on raspi: {RASPI}, using emu: {USE_EMU}")
 
 if USE_EMU:
     from pyglet.window import key
-    BUTTON_A = key.A
-    BUTTON_B = key.Z
+    BUTTON_A = key.Z
+    BUTTON_B = key.A
     BUTTON_C = key.SPACE
     BUTTON_UP = key.UP
     BUTTON_DOWN = key.DOWN

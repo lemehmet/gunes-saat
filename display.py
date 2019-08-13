@@ -1,10 +1,11 @@
 from time import sleep
-
 import config
 from PIL import Image, ImageDraw
 if config.USE_EMU:
     import pyglet
     from pyglet.gl import *
+    from pyglet import window
+    import six
 else:
     # Import libraries for oled display:
     # https://learn.adafruit.com/adafruit-128x64-oled-bonnet-for-raspberry-pi/overview
@@ -16,13 +17,18 @@ else:
 
 
 if config.USE_EMU:
-    @window.event
-    def pyglet_on_key_press(self, symbol, modifiers):
-        print(f"Received keyboard callback {symbol}:{modifiers}")
-        self._resolve(symbol)
+    def on_key_press(symbol, modifiers):
+        display_instance.handle_button_event(symbol)(pressed=True)
+        display_instance.old_on_key_press(symbol, modifiers)
+
+    def on_key_release(symbol, modifiers):
+        display_instance.handle_button_event(symbol)(pressed=False)
+        # display_instance.old_on_key_release(symbol, modifiers)
+
+    def on_draw():
+        display_instance.paint()
 else:
     def gpio_callback(channel):
-        print(f"Received falling gpio on channel {channel}, instance is {display_instance}")
         display_instance.handle_button_event(channel)(pressed=not GPIO.input(channel))
 
 
@@ -35,9 +41,25 @@ class SaatDisplay:
 
         if config.USE_EMU:
             # Create the window using pyglet
-            import six
-
             self.window = pyglet.window.Window(visible=False, resizable=True)
+            self.old_on_key_press = self.window.on_key_press
+            # AttributeError: 'CocoaWindow' object has no attribute 'on_key_release'
+            # self.old_on_key_release = self.window.on_key_release
+            self.window.on_key_press = on_key_press
+            self.window.on_key_release = on_key_release
+            self.window.on_draw = on_draw
+
+            checks = pyglet.image.create(32, 32, pyglet.image.CheckerImagePattern())
+            self.background = pyglet.image.TileableTexture.create_for_image(checks)
+
+            # Enable alpha blending, required for image.blit.
+            glEnable(GL_BLEND)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+            self.window.width = config.WIDTH
+            self.window.height = config.HEIGHT
+            self.window.set_visible()
+
         else:
             GPIO.setmode(GPIO.BCM)
 
@@ -63,12 +85,17 @@ class SaatDisplay:
             config.BUTTON_LEFT: self.on_button_left,
             config.BUTTON_RIGHT: self.on_button_right,
         }
-        return mapping[button]
+        try:
+            return mapping[button]
+        except KeyError:
+            return self.default_handler
 
     def clear(self, color=0):
         if config.USE_EMU:
             # TODO
             print("simulated display needs cleaning")
+            self.draw.rectangle((0, 0, config.WIDTH, config.HEIGHT), fill=1)
+            self.update()
         else:
             # Clear display.
             self.disp.fill(color)
@@ -76,10 +103,14 @@ class SaatDisplay:
 
     def update(self):
         if config.USE_EMU:
-            print("do simulated")
+            pass
+            # self.window.activate()
         else:
             self.disp.image(self.pilimg)
             self.disp.show()
+
+    def default_handler(self, pressed):
+        print("Unbound key, default handler")
 
     def on_button_a(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button A")
@@ -116,6 +147,33 @@ class SaatDisplay:
         display.draw.polygon([(60, 30), (42, 21), (42, 41)], outline=255, fill=1 if pressed else 0)  # right
         display.update()
 
+    def paint(self):
+        if config.USE_EMU:
+            # TODO: Optimize multiple transforms
+            pilbuffer = self.pilimg.tobytes()
+            ibuffer = []
+            for b in pilbuffer:
+                for i in range(8):
+                    ibuffer.append(255 if b & 0x80 else 0)
+                    b <<= 1
+            frame = b''.join(list(map(lambda x: six.int2byte(x), ibuffer)))
+            image = pyglet.image.ImageData(self.pilimg.width, self.pilimg.height, 'G', frame, pitch = -self.pilimg.width * 1)
+            image.anchor_x = image.width // 2
+            image.anchor_y = image.height // 2
+            self.background.blit_tiled(0, 0, 0, self.window.width, self.window.height)
+            image.blit(self.window.width // 2, self.window.height // 2)
+
+    def run(self):
+        if config.USE_EMU:
+            pyglet.app.run()
+        else:
+            try:
+                while True:
+                    sleep(0.2)
+            except KeyboardInterrupt:
+                if not config.USE_EMU:
+                    GPIO.cleanup()
+
 
 if __name__ == "__main__":
     print("Starting saat display test")
@@ -129,9 +187,4 @@ if __name__ == "__main__":
     display.draw.ellipse((100, 20, 120, 40), outline=255, fill=0)  # B button
     display.update()
 
-    try:
-        while True:
-            sleep(0.2)
-    except KeyboardInterrupt:
-        if not config.USE_EMU:
-            GPIO.cleanup()
+    display.run()
