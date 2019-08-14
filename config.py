@@ -5,8 +5,20 @@ FORCE_EMU = False # Forces running code in UI emulation even on RasPi
 USE_EMU = True if not RASPI else True if FORCE_EMU else False
 WIDTH = 128
 HEIGHT = 64
-BG=255
-FG=0
+BG = 0
+FG = 255
+CLOCK_FONT_SIZE = 20
+
+FONTS = [
+    ('04B_30__.TTF', 1.0),
+    ('Minecraftia-Regular.ttf', 1.2),
+    ('pixelmix.ttf', 1.2),
+    ('Retron2000.ttf', 1.4),
+    ('slkscr.ttf', 1.4),
+    ('Squarewave-Italic.ttf', 2.0),
+    ('Squarewave.ttf', 2.0),
+    ('VCR_OSD_MONO_1.001.ttf', 1.0),
+]
 
 print(f"Running on raspi: {RASPI}, using emu: {USE_EMU}")
 

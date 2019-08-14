@@ -1,4 +1,6 @@
-from time import sleep
+import sched
+import threading
+import time
 import config
 from PIL import Image, ImageDraw
 if config.USE_EMU:
@@ -33,6 +35,7 @@ else:
 
 
 class OledDisplay:
+    mutex = threading.Lock
     def __init__(self):
         global display_instance
         display_instance = self
@@ -56,8 +59,8 @@ class OledDisplay:
             glEnable(GL_BLEND)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-            self.window.width = config.WIDTH
-            self.window.height = config.HEIGHT
+            self.window.width = config.WIDTH + 8
+            self.window.height = config.HEIGHT + 8
             self.window.set_visible()
 
         else:
@@ -73,8 +76,14 @@ class OledDisplay:
                 GPIO.add_event_detect(button, GPIO.BOTH, callback=gpio_callback, bouncetime=20)
 
         self.clear()
-        print(f"Completed display init. {self.draw}")
+        self.scheduler = sched.scheduler(time.time, time.sleep)
+        self.half_second_event = self.scheduler.enter(0.5, 1, self.on_half_second, ())
 
+        t = threading.Thread(target=self.scheduler.run)
+        t.start()
+
+    def on_half_second(self):
+        self.half_second_event = self.scheduler.enter(0.5, 1, self.on_half_second, ())
 
     def handle_button_event(self, button):
         mapping = {
@@ -98,15 +107,17 @@ class OledDisplay:
             self.draw.rectangle((0, 0, config.WIDTH, config.HEIGHT), fill=1)
             self.update()
         else:
-            # Clear display.
-            self.disp.fill(color)
-            self.disp.show()
+            with self.mutex:
+                # Clear display.
+                self.disp.fill(color)
+                self.disp.show()
 
     def update(self):
         if config.USE_EMU:
             pass
             # self.window.activate()
         else:
+
             self.disp.image(self.pilimg)
             self.disp.show()
 
@@ -155,7 +166,7 @@ class OledDisplay:
             ibuffer = []
             for b in pilbuffer:
                 for i in range(8):
-                    ibuffer.append(0 if b & 0x80 else 255)
+                    ibuffer.append(255 if b & 0x80 else 0)
                     b <<= 1
             frame = b''.join(list(map(lambda x: six.int2byte(x), ibuffer)))
             image = pyglet.image.ImageData(self.pilimg.width, self.pilimg.height, 'L', frame, pitch = -self.pilimg.width * 1)
