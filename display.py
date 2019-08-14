@@ -115,7 +115,7 @@ class OledDisplay:
     def update(self):
         if config.USE_EMU:
             pass
-            # self.window.activate()
+            # self.window.on_draw()
         else:
 
             self.disp.image(self.pilimg)
@@ -181,7 +181,7 @@ class OledDisplay:
         else:
             try:
                 while True:
-                    sleep(0.2)
+                    time.sleep(0.2)
             except KeyboardInterrupt:
                 if not config.USE_EMU:
                     GPIO.cleanup()

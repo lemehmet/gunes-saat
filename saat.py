@@ -32,7 +32,7 @@ class Saat(display.OledDisplay):
 
     def clock_now(self):
         self.the_dot = not self.the_dot
-        return strftime(f"%H{':' if self.the_dot else ' '}%M", localtime())
+        return strftime(f"%I{':' if self.the_dot else '.'}%M %p", localtime())
 
     def wp_debug(self):
         print(f"Font: {self.font.getname()} Pixel: ({self.test_pixel[0], self.test_pixel[1]})")
