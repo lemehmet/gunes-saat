@@ -35,7 +35,7 @@ else:
 
 
 class OledDisplay:
-    mutex = threading.Lock
+    mutex = threading.Lock()
     def __init__(self):
         global display_instance
         display_instance = self
