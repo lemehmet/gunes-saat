@@ -1,8 +1,15 @@
 import sched
 import threading
 import time
+from random import randrange
+
+from pyglet.window import FPSDisplay
+
 import config
 from PIL import Image, ImageDraw
+
+from atomic_value import AtomicValue
+
 if config.USE_EMU:
     import pyglet
     from pyglet.gl import *
@@ -40,7 +47,6 @@ else:
 
 class OledDisplay:
     mutex_disp = threading.Lock()
-    mutex_sched = threading.Lock()
     def __init__(self):
         global display_instance
         display_instance = self
@@ -66,10 +72,11 @@ class OledDisplay:
             glEnable(GL_BLEND)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-            self.window.width = config.WIDTH + 8
-            self.window.height = config.HEIGHT + 8
+            self.window.width = config.WIDTH + 64
+            self.window.height = config.HEIGHT + 64
             self.window.set_visible()
 
+            self.fps_display = FPSDisplay(self.window)
         else:
             GPIO.setmode(GPIO.BCM)
 
@@ -85,21 +92,20 @@ class OledDisplay:
         self.clear()
         self.scheduler = sched.scheduler(time.time, time.sleep)
         self.half_second_event = self.scheduler.enter(0.5, 1, self.on_half_second, ())
-        self.is_running = True
+        self.is_running = AtomicValue(True)
+        self.is_painting = AtomicValue(False)
 
         t = threading.Thread(target=self.scheduler.run)
         t.start()
 
     def on_close(self):
         if config.USE_EMU:
-            with self.mutex_sched:
-                self.is_running = False
+            self.is_running.set(False)
 
     def on_half_second(self):
-        with self.mutex_sched:
-            if not self.is_running:
-                print("Terminating scheduler")
-                return
+        if not self.is_running.get():
+            print("Terminating scheduler")
+            return
         self.half_second_event = self.scheduler.enter(0.5, 1, self.on_half_second, ())
 
     def handle_button_event(self, button):
@@ -122,17 +128,17 @@ class OledDisplay:
             # TODO
             print("simulated display needs cleaning")
             self.draw.rectangle((0, 0, config.WIDTH, config.HEIGHT), fill=1)
-            self.update()
+            self.update_image()
         else:
             with self.mutex_disp:
                 # Clear display.
                 self.disp.fill(color)
                 self.disp.show()
 
-    def update(self):
+    def update_image(self):
         if config.USE_EMU:
+            # TODO: Set flag to mark update
             pass
-            self.window.invalid = True
             # self.window.on_draw()
         else:
 
@@ -145,40 +151,42 @@ class OledDisplay:
     def on_button_a(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button A")
         self.draw.ellipse((70, 40, 90, 60), outline=255, fill=1 if pressed else 0)  # A button
-        self.update()
+        self.update_image()
 
     def on_button_b(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button B")
         self.draw.ellipse((100, 20, 120, 40), outline=255, fill=1 if pressed else 0)  # B button
-        self.update()
+        self.update_image()
 
     def on_button_c(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button C")
         self.draw.rectangle((20, 22, 40, 40), outline=255, fill=1 if pressed else 0)  # center
-        self.update()
+        self.update_image()
 
     def on_button_up(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button UP")
         self.draw.polygon([(20, 20), (30, 2), (40, 20)], outline=255, fill=1 if pressed else 0)  # Up
-        self.update()
+        self.update_image()
 
     def on_button_down(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button DOWN")
         self.draw.polygon([(30, 60), (40, 42), (20, 42)], outline=255, fill=1 if pressed else 0)  # down
-        self.update()
+        self.update_image()
 
     def on_button_left(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button LEFT")
         self.draw.polygon([(0, 30), (18, 21), (18, 41)], outline=255, fill=1 if pressed else 0)  # left
-        self.update()
+        self.update_image()
 
     def on_button_right(self, pressed):
         print(f"{'Pressed' if pressed else 'Released'} - Button RIGHT")
         self.draw.polygon([(60, 30), (42, 21), (42, 41)], outline=255, fill=1 if pressed else 0)  # right
-        self.update()
+        self.update_image()
 
     def paint(self):
-        if config.USE_EMU:
+        if config.USE_EMU and not self.is_painting.get():
+            self.is_painting.set(True)
+            self.window.clear()
             # TODO: Optimize multiple transforms
             pilbuffer = self.pilimg.tobytes()
             ibuffer = []
@@ -192,9 +200,12 @@ class OledDisplay:
             image.anchor_y = image.height // 2
             self.background.blit_tiled(0, 0, 0, self.window.width, self.window.height)
             image.blit(self.window.width // 2, self.window.height // 2)
+            self.fps_display.draw()
+            self.is_painting.set(False)
 
     def run(self):
         if config.USE_EMU:
+            pyglet.clock.schedule(OledDisplay.update_image)
             pyglet.app.run()
         else:
             try:
@@ -215,6 +226,6 @@ if __name__ == "__main__":
     display.draw.rectangle((20, 22, 40, 40), outline=255, fill=0)  # center
     display.draw.ellipse((70, 40, 90, 60), outline=255, fill=0)  # A button
     display.draw.ellipse((100, 20, 120, 40), outline=255, fill=0)  # B button
-    display.update()
+    display.update_image()
 
     display.run()

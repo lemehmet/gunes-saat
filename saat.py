@@ -8,7 +8,7 @@ import display
 
 class Saat(display.OledDisplay):
     test_pixel = [120, 60]
-    font_index = 0
+    font_index = 3
     mx = config.WIDTH - 1
     my = config.HEIGHT - 2
     cx = config.WIDTH // 2
@@ -48,7 +48,7 @@ class Saat(display.OledDisplay):
         self.wp_background()
         self.wp_debug()
         self.wp_clock()
-        self.update()
+        self.update_image()
 
     def set_clock_font(self):
         print(f"Setting font {config.FONTS[self.font_index][0]} x{config.FONTS[self.font_index][1]}")
@@ -59,8 +59,8 @@ class Saat(display.OledDisplay):
             print(f"Error while opening font: {err.filename}, {err.filename2}: {err.strerror} {err.errno}")
 
     def on_half_second(self):
-        self.wp_update()
         display.OledDisplay.on_half_second(self)
+        self.wp_update()
 
     def on_button_a(self, pressed):
         if pressed:
