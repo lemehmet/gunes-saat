@@ -18,6 +18,21 @@ FONTS = [
     ('Squarewave-Italic.ttf', 2.0),
     ('Squarewave.ttf', 2.0),
     ('VCR_OSD_MONO_1.001.ttf', 1.0),
+    ('3Dventure.ttf', 1.5),
+    ('04B_19__.TTF', 1.5),
+    ('advanced_pixel_lcd-7.ttf', 0.8),
+    ('Alkhemikal.ttf', 2.0),
+    ('cube.ttf', 1.0),
+    ('DigitalDisco-Thin.ttf', 1.8),
+    ('edunline.ttf', 1.4),
+    ('m04.TTF', 0.7),
+    ('Nintendo-DS-BIOS.ttf', 2.0),
+    ('Perfect-DOS-VGA-437.ttf', 1.2),
+    ('PIXEARG_.TTF', 1.0),
+    ('pixelpoiiz.ttf', 1.2),
+    ('Pokemon Classic.ttf', 0.8),
+    ('Super-Mario-Bros--3.ttf', 1.0),
+    ('Vermin Vibes 1989.ttf', 2.0),
 ]
 
 print(f"Running on raspi: {RASPI}, using emu: {USE_EMU}")

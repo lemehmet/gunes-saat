@@ -41,7 +41,6 @@ class Saat(display.OledDisplay):
 
     def wp_clock(self):
         now = self.clock_now()
-        print(f"{now}")
         text_width, text_height = self.draw.textsize(now, font=self.font)
         self.draw.text((self.cx - text_width // 2, self.cy - text_height // 2), now, font=self.font, fill=config.FG)
 
@@ -52,8 +51,12 @@ class Saat(display.OledDisplay):
         self.update()
 
     def set_clock_font(self):
-        self.font = ImageFont.truetype(f"./fonts/{config.FONTS[self.font_index][0]}",
-                                       floor(config.CLOCK_FONT_SIZE * config.FONTS[self.font_index][1]))
+        print(f"Setting font {config.FONTS[self.font_index][0]} x{config.FONTS[self.font_index][1]}")
+        try:
+            self.font = ImageFont.truetype(f"./fonts/{config.FONTS[self.font_index][0]}",
+                                           floor(config.CLOCK_FONT_SIZE * config.FONTS[self.font_index][1]))
+        except OSError as err:
+            print(f"Error while opening font: {err.filename}, {err.filename2}: {err.strerror} {err.errno}")
 
     def on_half_second(self):
         self.wp_update()
