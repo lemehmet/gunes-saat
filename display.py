@@ -29,13 +29,18 @@ if config.USE_EMU:
 
     def on_draw():
         display_instance.paint()
+
+    def on_close():
+        display_instance.on_close()
+        display_instance.original_on_close()
 else:
     def gpio_callback(channel):
         display_instance.handle_button_event(channel)(pressed=not GPIO.input(channel))
 
 
 class OledDisplay:
-    mutex = threading.Lock()
+    mutex_disp = threading.Lock()
+    mutex_sched = threading.Lock()
     def __init__(self):
         global display_instance
         display_instance = self
@@ -51,6 +56,8 @@ class OledDisplay:
             self.window.on_key_press = on_key_press
             self.window.on_key_release = on_key_release
             self.window.on_draw = on_draw
+            self.original_on_close = self.window.on_close
+            self.window.on_close = on_close
 
             checks = pyglet.image.create(32, 32, pyglet.image.CheckerImagePattern())
             self.background = pyglet.image.TileableTexture.create_for_image(checks)
@@ -78,11 +85,21 @@ class OledDisplay:
         self.clear()
         self.scheduler = sched.scheduler(time.time, time.sleep)
         self.half_second_event = self.scheduler.enter(0.5, 1, self.on_half_second, ())
+        self.is_running = True
 
         t = threading.Thread(target=self.scheduler.run)
         t.start()
 
+    def on_close(self):
+        if config.USE_EMU:
+            with self.mutex_sched:
+                self.is_running = False
+
     def on_half_second(self):
+        with self.mutex_sched:
+            if not self.is_running:
+                print("Terminating scheduler")
+                return
         self.half_second_event = self.scheduler.enter(0.5, 1, self.on_half_second, ())
 
     def handle_button_event(self, button):
@@ -107,7 +124,7 @@ class OledDisplay:
             self.draw.rectangle((0, 0, config.WIDTH, config.HEIGHT), fill=1)
             self.update()
         else:
-            with self.mutex:
+            with self.mutex_disp:
                 # Clear display.
                 self.disp.fill(color)
                 self.disp.show()
@@ -115,6 +132,7 @@ class OledDisplay:
     def update(self):
         if config.USE_EMU:
             pass
+            self.window.invalid = True
             # self.window.on_draw()
         else:
 
