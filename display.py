@@ -91,7 +91,8 @@ class OledDisplay:
 
         self.clear()
         self.scheduler = sched.scheduler(time.time, time.sleep)
-        self.half_second_event = self.scheduler.enter(0.5, 1, self.on_half_second, ())
+        # First event comes later
+        self.sched_event = self.scheduler.enter(1, 1, self.on_sched_event, ())
         self.is_running = AtomicValue(True)
         self.is_painting = AtomicValue(False)
 
@@ -102,11 +103,11 @@ class OledDisplay:
         if config.USE_EMU:
             self.is_running.set(False)
 
-    def on_half_second(self):
+    def on_sched_event(self):
         if not self.is_running.get():
             print("Terminating scheduler")
             return
-        self.half_second_event = self.scheduler.enter(0.5, 1, self.on_half_second, ())
+        self.sched_event = self.scheduler.enter(0.5, 1, self.on_sched_event, ())
 
     def handle_button_event(self, button):
         mapping = {
@@ -149,39 +150,25 @@ class OledDisplay:
         print("Unbound key, default handler")
 
     def on_button_a(self, pressed):
-        print(f"{'Pressed' if pressed else 'Released'} - Button A")
-        self.draw.ellipse((70, 40, 90, 60), outline=255, fill=1 if pressed else 0)  # A button
-        self.update_image()
+        pass
 
     def on_button_b(self, pressed):
-        print(f"{'Pressed' if pressed else 'Released'} - Button B")
-        self.draw.ellipse((100, 20, 120, 40), outline=255, fill=1 if pressed else 0)  # B button
-        self.update_image()
+        pass
 
     def on_button_c(self, pressed):
-        print(f"{'Pressed' if pressed else 'Released'} - Button C")
-        self.draw.rectangle((20, 22, 40, 40), outline=255, fill=1 if pressed else 0)  # center
-        self.update_image()
+        pass
 
     def on_button_up(self, pressed):
-        print(f"{'Pressed' if pressed else 'Released'} - Button UP")
-        self.draw.polygon([(20, 20), (30, 2), (40, 20)], outline=255, fill=1 if pressed else 0)  # Up
-        self.update_image()
+        pass
 
     def on_button_down(self, pressed):
-        print(f"{'Pressed' if pressed else 'Released'} - Button DOWN")
-        self.draw.polygon([(30, 60), (40, 42), (20, 42)], outline=255, fill=1 if pressed else 0)  # down
-        self.update_image()
+        pass
 
     def on_button_left(self, pressed):
-        print(f"{'Pressed' if pressed else 'Released'} - Button LEFT")
-        self.draw.polygon([(0, 30), (18, 21), (18, 41)], outline=255, fill=1 if pressed else 0)  # left
-        self.update_image()
+        pass
 
     def on_button_right(self, pressed):
-        print(f"{'Pressed' if pressed else 'Released'} - Button RIGHT")
-        self.draw.polygon([(60, 30), (42, 21), (42, 41)], outline=255, fill=1 if pressed else 0)  # right
-        self.update_image()
+        pass
 
     def paint(self):
         if config.USE_EMU and not self.is_painting.get():
