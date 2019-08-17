@@ -26,6 +26,7 @@ class Saat(display.OledDisplay):
         try:
             display.OledDisplay.on_sched_event(self)
             self.vm.on_sched_event()
+            self.update_image()
         except AttributeError:
             print("Too early to receive scheduler events, will try again")
 
