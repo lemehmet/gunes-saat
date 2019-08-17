@@ -3,7 +3,6 @@ import threading
 import time
 from random import randrange
 
-from pyglet.window import FPSDisplay
 
 import config
 from PIL import Image, ImageDraw
@@ -15,6 +14,7 @@ if config.USE_EMU:
     from pyglet.gl import *
     from pyglet import window
     import six
+    from pyglet.window import FPSDisplay
 else:
     # Import libraries for oled display:
     # https://learn.adafruit.com/adafruit-128x64-oled-bonnet-for-raspberry-pi/overview
