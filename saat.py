@@ -1,12 +1,9 @@
-from math import floor
-from time import localtime, strftime
-
-from PIL import ImageFont
-
 import config
 import display
+from clock_view import ClockView
 from common import log_paint, log_fw
-from views import Manager, ClockView, MovingBall
+from moving_ball_view import MovingBall
+from views import Manager
 
 
 class Saat(display.OledDisplay):
@@ -23,7 +20,7 @@ class Saat(display.OledDisplay):
         moving_ball = MovingBall(display=self)
         clock_view.set_right(moving_ball)
         moving_ball.set_left(clock_view)
-        self.vm = Manager(clock_view)
+        self.vm = Manager(moving_ball)
         # TODO: Invoke the current view's initialize
         self.vm.paint()
         log_fw.debug("Issued initial paint")

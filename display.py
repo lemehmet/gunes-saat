@@ -111,7 +111,7 @@ class OledDisplay:
         if not self.is_running.get():
             print("Terminating scheduler")
             return
-        self.sched_event = self.scheduler.enter(0.05, 1, self.on_sched_event, ())
+        self.sched_event = self.scheduler.enter(0.02, 1, self.on_sched_event, ())
 
     def handle_button_event(self, button):
         mapping = {
