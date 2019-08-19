@@ -1,9 +1,9 @@
 from math import floor
 from time import strftime, localtime
-
 from PIL import ImageFont
 
 import config
+from common import log_paint, log_fw
 
 
 class View:
@@ -14,6 +14,10 @@ class View:
 
     def __init__(self, display):
         self.display = display
+
+    def paint(self):
+        log_paint.debug("View::paint()")
+        self.display.paint()
 
     def set_left(self, view):
         prev = self.left
@@ -38,11 +42,8 @@ class View:
     def activate(self):
         pass
 
-    def paint(self):
-        pass
-
     def on_sched_event(self):
-        pass
+        log_fw.debug("View::on_sched_event()")
 
     def on_button_a(self, pressed):
         pass
@@ -73,21 +74,46 @@ class Manager:
 
     def _set_current(self, view):
         self.current = view
-        self.paint = self.current.paint
+        self._paint = self.current.paint
         self.activate = self.current.activate
         self.on_sched_event = self.current.on_sched_event
-        self.on_button_a = self.current.on_button_a
-        self.on_button_b = self.current.on_button_b
-        self.on_button_c = self.current.on_button_c
-        self.on_button_left = self.current.on_button_left
-        self.on_button_right = self.current.on_button_right
-        self.on_button_up = self.current.on_button_up
-        self.on_button_down = self.current.on_button_down
+        self._on_button_a = self.current.on_button_a
+        self._on_button_b = self.current.on_button_b
+        self._on_button_c = self.current.on_button_c
+        self._on_button_left = self.current.on_button_left
+        self._on_button_right = self.current.on_button_right
+        self._on_button_up = self.current.on_button_up
+        self._on_button_down = self.current.on_button_down
         self.activate()
+
+    def paint(self):
+        log_paint.debug("Manager::paint()")
+        self._paint()
+
+    def on_button_a(self, pressed):
+        self._on_button_a(pressed)
+
+    def on_button_b(self, pressed):
+        self._on_button_b(pressed)
+
+    def on_button_c(self, pressed):
+        self._on_button_c(pressed)
+
+    def on_button_up(self, pressed):
+        self._on_button_up(pressed)
+
+    def on_button_down(self, pressed):
+        self._on_button_down(pressed)
+
+    def on_button_left(self, pressed):
+        self._on_button_left(pressed)
+
+    def on_button_right(self, pressed):
+        self._on_button_right(pressed)
 
     def _move(self, target):
         prev = self.current
-        if target != None:
+        if target is not None:
             self._set_current(target)
         return prev
 
@@ -116,6 +142,7 @@ class ClockView(View):
         pass
 
     def paint(self):
+        log_paint.debug("ClockView::paint()")
         # Background
         self.display.draw.rectangle((0, 0, self.display.mx, self.display.my), fill=config.BG, outline=config.FG)
         # Clock
@@ -123,18 +150,18 @@ class ClockView(View):
         clock_text = strftime(f"%I{':' if self.blink_state else '.'}%M %p", localtime())
         text_width, text_height = self.display.draw.textsize(clock_text, font=self.font)
         self.display.draw.text((self.display.cx - text_width // 2, self.display.cy - text_height // 2), clock_text, font=self.font, fill=config.FG)
-
+        View.paint(self)
 
     def _set_clock_font(self):
-        print(f"Setting font {config.FONTS[self.font_index][0]} x{config.FONTS[self.font_index][1]}")
+        log_fw.debug(f"Setting font {config.FONTS[self.font_index][0]} x{config.FONTS[self.font_index][1]}")
         try:
             self.font = ImageFont.truetype(f"./fonts/{config.FONTS[self.font_index][0]}",
                                            floor(config.CLOCK_FONT_SIZE * config.FONTS[self.font_index][1]))
         except OSError as err:
-            print(f"Error while opening font: {err.filename}, {err.filename2}: {err.strerror} {err.errno}")
-
+            log_fw.exception(f"Error while opening font: {err.filename}, {err.filename2}: {err.strerror} {err.errno}")
 
     def on_sched_event(self):
+        log_fw.debug("ClockView::on_sched_event()")
         self.paint()
 
     def on_button_a(self, pressed):
@@ -177,13 +204,14 @@ class MovingBall(View):
         pass
 
     def paint(self):
+        log_paint.debug("MovingBall::paint()")
         # Background
         self.display.draw.rectangle((0, 0, self.display.mx, self.display.my), fill=config.BG, outline=config.FG)
         self.display.draw.ellipse(((self.x - self.radius, self.y - self.radius),
                                    (self.x + self.radius, self.y + self.radius)), fill=config.FG, width=self.radius)
 
-
     def on_sched_event(self):
+        log_fw.debug("MovingBall::on_sched_event()")
         self.paint()
 
     def on_button_a(self, pressed):
