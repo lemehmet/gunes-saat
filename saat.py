@@ -11,7 +11,6 @@ class Saat(display.OledDisplay):
     my = config.HEIGHT - 2
     cx = config.WIDTH // 2
     cy = config.HEIGHT // 2
-    selecting_view = False
 
     def __init__(self):
         log_fw.debug("Initializing")
@@ -43,10 +42,7 @@ class Saat(display.OledDisplay):
         self.vm.on_button_b(pressed)
 
     def on_button_c(self, pressed):
-        if pressed:
-            self.selecting_view = not self.selecting_view
-            log_fw.info(f"{'Selecting view' if self.selecting_view else 'Done view selection'}")
-        # self.vm.on_button_c(pressed)
+        self.vm.on_button_c(pressed)
 
     def on_button_up(self, pressed):
         self.vm.on_button_up(pressed)
@@ -55,13 +51,9 @@ class Saat(display.OledDisplay):
         self.vm.on_button_down(pressed)
 
     def on_button_left(self, pressed):
-        if self.selecting_view:
-            self.vm.move_left()
         self.vm.on_button_left(pressed)
 
     def on_button_right(self, pressed):
-        if self.selecting_view:
-            self.vm.move_right()
         self.vm.on_button_right(pressed)
 
 

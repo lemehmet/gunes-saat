@@ -64,6 +64,7 @@ class View:
 
 class Manager:
     _pressed_button = None
+    _selecting_view = False
 
     def __init__(self, root):
         self.root = root
@@ -104,24 +105,39 @@ class Manager:
         self._on_button_b(pressed, False)
 
     def on_button_c(self, pressed):
-        self._handle_repeat(pressed, self._on_button_c)
-        self._on_button_c(pressed, False)
+        if pressed:
+            self._selecting_view = not self._selecting_view
+            log_fw.info(f"{'Selecting view' if self._selecting_view else 'Done view selection'}")
+        # self._handle_repeat(pressed, self._on_button_c)
+        # self._on_button_c(pressed, False)
 
     def on_button_up(self, pressed):
-        self._handle_repeat(pressed, self._on_button_up)
-        self._on_button_up(pressed, False)
+        if pressed and self._selecting_view:
+            self.move_up()
+        else:
+            self._handle_repeat(pressed, self._on_button_up)
+            self._on_button_up(pressed, False)
 
     def on_button_down(self, pressed):
-        self._handle_repeat(pressed, self._on_button_down)
-        self._on_button_down(pressed, False)
+        if pressed and self._selecting_view:
+            self.move_down()
+        else:
+            self._handle_repeat(pressed, self._on_button_down)
+            self._on_button_down(pressed, False)
 
     def on_button_left(self, pressed):
-        self._handle_repeat(pressed, self._on_button_left)
-        self._on_button_left(pressed, False)
+        if pressed and self._selecting_view:
+            self.move_left()
+        else:
+            self._handle_repeat(pressed, self._on_button_left)
+            self._on_button_left(pressed, False)
 
     def on_button_right(self, pressed):
-        self._handle_repeat(pressed, self._on_button_right)
-        self._on_button_right(pressed, False)
+        if pressed and self._selecting_view:
+            self.move_right()
+        else:
+            self._handle_repeat(pressed, self._on_button_right)
+            self._on_button_right(pressed, False)
 
     def _move(self, target):
         prev = self.current
