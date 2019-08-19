@@ -14,7 +14,7 @@ class MovingBall(View):
 
     def __init__(self, display):
         View.__init__(self, display)
-        self.font = ImageFont.truetype(f"./fonts/{config.FONTS[3][0]}", floor(6 * config.FONTS[3][1]))
+        self.font = ImageFont.truetype(f"./fonts/{config.FONTS[3][0]}", floor(8 * config.FONTS[3][1]))
 
     def activate(self):
         pass
@@ -28,7 +28,7 @@ class MovingBall(View):
         self.display.draw.rectangle(bounds, outline=config.FG)
         self.display.draw.line(((self.x, self.y - self.radius), (self.x, self.y + self.radius)), fill=config.BG)
         self.display.draw.line(((self.x - self.radius, self.y), (self.x + self.radius, self.y)), fill=config.BG)
-        crtext = f"{self.x},{self.y}"
+        crtext = f"[{self.x},{self.y}]"
         cx, cy = self.display.draw.textsize(crtext, font=self.font)
         self.display.draw.text((0, 0), crtext, font=self.font, fill=config.FG)
         self.display.draw.text((0, cy + 1), crtext, font=self.font, fill=config.BG)
