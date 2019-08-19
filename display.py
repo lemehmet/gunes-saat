@@ -130,8 +130,7 @@ class OledDisplay:
 
     def clear(self, color=0):
         if config.USE_EMU:
-            # TODO
-            print("simulated display needs cleaning")
+            # TODO Clean up for emu
             self.draw.rectangle((0, 0, config.WIDTH, config.HEIGHT), fill=1)
             self.update_image()
         else:
@@ -142,11 +141,12 @@ class OledDisplay:
 
     def update_image(self):
         if config.USE_EMU:
-            on_draw()
-            self.window.clear()
+            pass
+            # on_draw()
         else:
-            self.disp.image(self.pilimg)
-            self.disp.show()
+            with self.mutex_disp:
+                self.disp.image(self.pilimg)
+                self.disp.show()
 
     def default_handler(self, pressed):
         print("Unbound key, default handler")
@@ -196,7 +196,7 @@ class OledDisplay:
     @staticmethod
     def run():
         if config.USE_EMU:
-            # pyglet.clock.schedule(OledDisplay.update_image)
+            pyglet.clock.schedule(OledDisplay.update_image)
             pyglet.app.run()
         else:
             try:

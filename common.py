@@ -14,4 +14,4 @@ log_fw = logging.getLogger("framework")
 log_fw.setLevel(logging.INFO)
 
 log_paint = logging.getLogger("paint")
-log_paint.setLevel(logging.DEBUG)
+log_paint.setLevel(logging.INFO)
