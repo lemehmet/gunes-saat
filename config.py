@@ -1,7 +1,7 @@
 import platform
 
 RASPI = platform.machine().startswith("armv") and platform.system() == "Linux"
-FORCE_EMU = False # Forces running code in UI emulation even on RasPi
+FORCE_EMU = False  # Forces running code in UI emulation even on RasPi
 USE_EMU = True if not RASPI else True if FORCE_EMU else False
 WIDTH = 128
 HEIGHT = 64
@@ -33,12 +33,25 @@ FONTS = [
     ('Pokemon Classic.ttf', 0.8),
     ('Super-Mario-Bros--3.ttf', 1.0),
     ('Vermin Vibes 1989.ttf', 2.0),
+    ('Aardvark Cwm Type.ttf', 2.5),
+    ('BMNEA___.TTF', 1.6),
+    ('BMSTA___.TTF', 0.8),
+    ('Extrude.ttf', 1.8),
+    ('GhastlyPixe.ttf', 1.6),
+    ('GrapeSoda.ttf', 1.8),
+    ('ice_pixel-7.ttf', 1.8),
+    ('m20.TTF', 1.0),
+    ('Pixel-Noir.ttf', 1.0),
+    ('Pixeled English Font.ttf', 1.2),
+    ('TINYBBA_.TTF', 1.0),
+    ('V5_bloques.ttf', 0.8),
 ]
 
 print(f"Running on raspi: {RASPI}, using emu: {USE_EMU}")
 
 if USE_EMU:
     from pyglet.window import key
+
     BUTTON_A = key.Z
     BUTTON_B = key.A
     BUTTON_C = key.SPACE
@@ -48,6 +61,7 @@ if USE_EMU:
     BUTTON_RIGHT = key.RIGHT
 else:
     import board
+
     BUTTON_A = int(board.D5.id)
     BUTTON_B = int(board.D6.id)
     BUTTON_C = int(board.D4.id)

@@ -8,7 +8,7 @@ from views import Manager
 
 class Saat(display.OledDisplay):
     mx = config.WIDTH - 1
-    my = config.HEIGHT - 2
+    my = config.HEIGHT - 1
     cx = config.WIDTH // 2
     cy = config.HEIGHT // 2
 
