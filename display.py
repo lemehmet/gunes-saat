@@ -134,19 +134,43 @@ class OledDisplay:
             self.draw.rectangle((0, 0, config.WIDTH, config.HEIGHT), fill=1)
             self.update_image()
         else:
+
             with self.mutex_disp:
                 # Clear display.
                 self.disp.fill(color)
                 self.disp.show()
+
+    # Performance counters
+    _frames = 0
+    _started_at = None
+    _last_report = 0
+    _last_report_at = None
+    _avg_lock = 0
+    _avg_render = 0
+    def _inc_frame(self, enter, start, end):
+        self._avg_lock = ((self._avg_lock * self._frames) + (start - enter))/ (self._frames + 1)
+        self._avg_render = ((self._avg_render * self._frames) + (end - start))/ (self._frames + 1)
+        self._frames += 1
+        if self._started_at is None:
+            self._started_at = enter
+        if self._last_report_at is None:
+            self._last_report_at = enter
+            self._last_report = 0
+        elif  (self._last_report_at - enter) >= 1000000000:
+            frames_since = self._frames - self._last_report
+            log_paint.info(f"FPS: {frames_since / (end - self._last_report_at):4.2f} {frames / (end - self._started_at):4.2f} Time to lock: {self._avg_lock} to render: {self._avg_render}")
 
     def update_image(self):
         if config.USE_EMU:
             pass
             # on_draw()
         else:
+            enter = time.perf_counter()
             with self.mutex_disp:
+                start = time.perf_counter()
                 self.disp.image(self.pilimg)
                 self.disp.show()
+                self._inc_frame(enter, start, time.perf_counter())
 
     def default_handler(self, pressed):
         print("Unbound key, default handler")

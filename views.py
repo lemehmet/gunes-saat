@@ -1,3 +1,5 @@
+from enum import Enum, unique
+
 from common import log_paint, log_fw
 
 
@@ -62,9 +64,17 @@ class View:
         pass
 
 
+@unique
+class Direction(Enum):
+    UP = 1
+    DOWN = 2
+    LEFT = 3
+    RIGHT = 4
+
 class Manager:
     _pressed_button = None
     _selecting_view = False
+    _scroll_direction = None
 
     def __init__(self, root):
         self.root = root
@@ -91,6 +101,9 @@ class Manager:
     def on_sched_event(self):
         if self._pressed_button is not None:
             self._pressed_button(True, True)
+        elif self._scroll_direction is not None:
+            # TODO: Do the animation here
+            pass
         self._on_sched_event()
 
     def _handle_repeat(self, pressed, handler):
@@ -139,20 +152,21 @@ class Manager:
             self._handle_repeat(pressed, self._on_button_right)
             self._on_button_right(pressed, False)
 
-    def _move(self, target):
+    def _move(self, target, direction):
         prev = self.current
         if target is not None:
+            self._scroll_direction = direction
             self._set_current(target)
         return prev
 
     def move_right(self):
-        return self._move(self.current.right)
+        return self._move(self.current.right, Direction.RIGHT)
 
     def move_left(self):
-        return self._move(self.current.left)
+        return self._move(self.current.left, Direction.LEFT)
 
     def move_up(self):
-        return self._move(self.current.up)
+        return self._move(self.current.up, Direction.UP)
 
     def move_down(self):
-        return self._move(self.current.down)
+        return self._move(self.current.down, Direction.DOWN)
