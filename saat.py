@@ -2,6 +2,7 @@ import config
 import display
 from clock_view import ClockView
 from common import log_paint, log_fw
+from diag_lines import DiagnosticLine
 from moving_ball_view import MovingBall
 from views import Manager
 
@@ -17,9 +18,12 @@ class Saat(display.OledDisplay):
         display.OledDisplay.__init__(self)
         clock_view = ClockView(display=self)
         moving_ball = MovingBall(display=self)
+        diag_lines = DiagnosticLine(display=self)
+        diag_lines.set_right(clock_view)
+        clock_view.set_left(diag_lines)
         clock_view.set_right(moving_ball)
         moving_ball.set_left(clock_view)
-        self.vm = Manager(moving_ball)
+        self.vm = Manager(diag_lines)
         # TODO: Invoke the current view's initialize
         self.vm.paint()
         log_fw.debug("Issued initial paint")

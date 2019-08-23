@@ -180,6 +180,7 @@ class OledDisplay:
 
     def update_image(self):
         if config.USE_EMU:
+            pix = self.pilimg.load()
             pass
             # on_draw()
         else:
@@ -207,37 +208,39 @@ class OledDisplay:
         if imwidth != self.disp.width or imheight != self.disp.height:
             raise ValueError('Image must be same dimensions as display ({0}x{1}).' \
                 .format(self.disp.width, self.disp.height))
-        # Grab all the pixels from the image, faster than getpixel.
-        pix = image.load()
-        # Iterate through the memory pages
-        index = 0
-        page = self.disp.height // 8
-        for page in range(page):
-            # Iterate through all x axis columns.
-            for x in range(self.disp.width):
-                # Set the bits for the column of pixels at the current position.
-                bits = 0
-                # Don't use range here as it's a bit slow
+        self.disp.buf[0:1024] = self.pilimg.tobytes()[0:1024]
 
-                # bits = 0x55
-                y = page * 8
-                bits = (0 if pix[(x, y + 7)] == 0 else 0x80) \
-                        | (0 if pix[(x, y + 6)] == 0 else 0x40) \
-                        | (0 if pix[(x, y + 5)] == 0 else 0x20) \
-                        | (0 if pix[(x, y + 4)] == 0 else 0x10) \
-                        | (0 if pix[(x, y + 3)] == 0 else 0x08) \
-                        | (0 if pix[(x, y + 2)] == 0 else 0x04) \
-                        | (0 if pix[(x, y + 1)] == 0 else 0x02) \
-                        | (0 if pix[(x, y + 0)] == 0 else 0x01)
-
-
-                # for bit in [0, 1, 2, 3, 4, 5, 6, 7]:
-                #     bits = bits << 1
-                #     bits |= 0 if pix[(x, y + 7 - bit)] == 0 else 1
-
-                # Update buffer byte and increment to next byte.
-                self.disp.buf[index] = bits
-                index += 1
+        # # Grab all the pixels from the image, faster than getpixel.
+        # pix = image.load()
+        # # Iterate through the memory pages
+        # index = 0
+        # page = self.disp.height // 8
+        # for page in range(page):
+        #     # Iterate through all x axis columns.
+        #     for x in range(self.disp.width):
+        #         # Set the bits for the column of pixels at the current position.
+        #         bits = 0
+        #         # Don't use range here as it's a bit slow
+        #
+        #         # bits = 0x55
+        #         y = page * 8
+        #         bits = (0 if pix[(x, y + 7)] == 0 else 0x80) \
+        #                 | (0 if pix[(x, y + 6)] == 0 else 0x40) \
+        #                 | (0 if pix[(x, y + 5)] == 0 else 0x20) \
+        #                 | (0 if pix[(x, y + 4)] == 0 else 0x10) \
+        #                 | (0 if pix[(x, y + 3)] == 0 else 0x08) \
+        #                 | (0 if pix[(x, y + 2)] == 0 else 0x04) \
+        #                 | (0 if pix[(x, y + 1)] == 0 else 0x02) \
+        #                 | (0 if pix[(x, y + 0)] == 0 else 0x01)
+        #
+        #
+        #         # for bit in [0, 1, 2, 3, 4, 5, 6, 7]:
+        #         #     bits = bits << 1
+        #         #     bits |= 0 if pix[(x, y + 7 - bit)] == 0 else 1
+        #
+        #         # Update buffer byte and increment to next byte.
+        #         self.disp.buf[index] = bits
+        #         index += 1
 
     def default_handler(self, pressed):
         print("Unbound key, default handler")
