@@ -10,6 +10,8 @@ from common import log_paint, log_fw
 
 display_instance = None
 
+USE_MICRO = True
+
 if config.USE_EMU:
     import pyglet
     from pyglet.gl import *
@@ -22,8 +24,12 @@ else:
     import board
     import busio
     from digitalio import DigitalInOut, Direction, Pull
-    import adafruit_ssd1306
+    if USE_MICRO:
+        import adafruit_ssd1306
+    else:
+        import Adafruit_SSD1306
     import RPi.GPIO as GPIO
+    RST = 24
 
 if config.USE_EMU:
     def on_key_press(symbol, modifiers):
@@ -89,7 +95,11 @@ class OledDisplay:
             # Create the I2C interface.
             self.i2c = busio.I2C(board.SCL, board.SDA)
             # Create the SSD1306 OLED class.
-            self.disp = adafruit_ssd1306.SSD1306_I2C(config.WIDTH, config.HEIGHT, self.i2c)
+            if USE_MICRO:
+                self.disp = adafruit_ssd1306.SSD1306_I2C(config.WIDTH, config.HEIGHT, self.i2c)
+            else:
+                self.disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST)
+                self.disp.begin()
 
             for button in config.ALL_BUTTONS:
                 GPIO.setup(button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -137,8 +147,12 @@ class OledDisplay:
 
             with self.mutex_disp:
                 # Clear display.
-                self.disp.fill(color)
-                self.disp.show()
+                if USE_MICRO:
+                    self.disp.fill(color)
+                    self.disp.show()
+                else:
+                    self.disp.clear()
+                    self.disp.display()
 
     # Performance counters
     _frames = 0
@@ -147,18 +161,22 @@ class OledDisplay:
     _last_report_at = None
     _avg_lock = 0
     _avg_render = 0
-    def _inc_frame(self, enter, start, end):
+    _avg_write = 0
+    def _inc_frame(self, enter, start, render, end):
         self._avg_lock = ((self._avg_lock * self._frames) + (start - enter))/ (self._frames + 1)
-        self._avg_render = ((self._avg_render * self._frames) + (end - start))/ (self._frames + 1)
+        self._avg_render = ((self._avg_render * self._frames) + (render - start))/ (self._frames + 1)
+        self._avg_write = ((self._avg_write * self._frames) + (end - render))/ (self._frames + 1)
         self._frames += 1
         if self._started_at is None:
             self._started_at = enter
         if self._last_report_at is None:
             self._last_report_at = enter
             self._last_report = 0
-        elif  (self._last_report_at - enter) >= 1000000000:
+        elif  (end - self._last_report_at) >= 1.0:
             frames_since = self._frames - self._last_report
-            log_paint.info(f"FPS: {frames_since / (end - self._last_report_at):4.2f} {frames / (end - self._started_at):4.2f} Time to lock: {self._avg_lock} to render: {self._avg_render}")
+            log_paint.info(f"FPS: {frames_since / (end - self._last_report_at):4.2f} {self._frames / (end - self._started_at):4.2f} Time to lock: {self._avg_lock:4.3f} render: {self._avg_render:4.3f} write: {self._avg_write:4.3f}")
+            self._last_report_at = end
+            self._last_report = self._frames
 
     def update_image(self):
         if config.USE_EMU:
@@ -168,9 +186,58 @@ class OledDisplay:
             enter = time.perf_counter()
             with self.mutex_disp:
                 start = time.perf_counter()
-                self.disp.image(self.pilimg)
-                self.disp.show()
-                self._inc_frame(enter, start, time.perf_counter())
+                if USE_MICRO:
+                    self._cakma_image(self.pilimg)
+                    render = time.perf_counter()
+                    self.disp.show()
+                else:
+                    self.disp.image(self.pilimg)
+                    render = time.perf_counter()
+                    self.disp.display()
+
+                self._inc_frame(enter, start, render, time.perf_counter())
+
+    def _cakma_image(self, image):
+        """Set buffer to value of Python Imaging Library image.  The image should
+        be in 1 bit mode and a size equal to the display size.
+        """
+        if image.mode != '1':
+            raise ValueError('Image must be in mode 1.')
+        imwidth, imheight = image.size
+        if imwidth != self.disp.width or imheight != self.disp.height:
+            raise ValueError('Image must be same dimensions as display ({0}x{1}).' \
+                .format(self.disp.width, self.disp.height))
+        # Grab all the pixels from the image, faster than getpixel.
+        pix = image.load()
+        # Iterate through the memory pages
+        index = 0
+        page = self.disp.height // 8
+        for page in range(page):
+            # Iterate through all x axis columns.
+            for x in range(self.disp.width):
+                # Set the bits for the column of pixels at the current position.
+                bits = 0
+                # Don't use range here as it's a bit slow
+
+                # bits = 0x55
+                y = page * 8
+                bits = (0 if pix[(x, y + 7)] == 0 else 0x80) \
+                        | (0 if pix[(x, y + 6)] == 0 else 0x40) \
+                        | (0 if pix[(x, y + 5)] == 0 else 0x20) \
+                        | (0 if pix[(x, y + 4)] == 0 else 0x10) \
+                        | (0 if pix[(x, y + 3)] == 0 else 0x08) \
+                        | (0 if pix[(x, y + 2)] == 0 else 0x04) \
+                        | (0 if pix[(x, y + 1)] == 0 else 0x02) \
+                        | (0 if pix[(x, y + 0)] == 0 else 0x01)
+
+
+                # for bit in [0, 1, 2, 3, 4, 5, 6, 7]:
+                #     bits = bits << 1
+                #     bits |= 0 if pix[(x, y + 7 - bit)] == 0 else 1
+
+                # Update buffer byte and increment to next byte.
+                self.disp.buf[index] = bits
+                index += 1
 
     def default_handler(self, pressed):
         print("Unbound key, default handler")

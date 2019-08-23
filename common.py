@@ -5,7 +5,7 @@ import logging
 logging.basicConfig(format='%(asctime)s %(funcName)s@%(threadName)s: %(message)s',
                     datefmt='%m-%d %H:%M:%S',
                     # filename='./saat.log', filemode='w',
-                    level=logging.DEBUG)
+                    level=logging.WARNING)
 # console = logging.StreamHandler()
 # console.setLevel(logging.DEBUG)
 # logging.getLogger('').addHandler(console)
