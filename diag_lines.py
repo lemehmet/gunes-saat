@@ -19,8 +19,8 @@ class DiagnosticLine(View):
         pass
 
     def paint(self):
-        log_paint.debug("DiagnosticLine::paint()")
-        self.display.draw.rectangle((0, 0, self.display.mx, self.display.my), fill=config.BG, outline=config.FG)
+        log_paint.debug(f"DiagnosticLine::paint() {self.x} x {self.y} {self.len}")
+        self.display.draw.rectangle((0, 0, self.display.mx, self.display.my), fill=config.BG, outline=config.BG)
         self.display.draw.line(((self.x, self.y), (self.x + self.len, self.y)), fill=config.FG)
 
 

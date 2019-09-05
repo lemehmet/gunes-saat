@@ -180,7 +180,6 @@ class OledDisplay:
 
     def update_image(self):
         if config.USE_EMU:
-            pix = self.pilimg.load()
             pass
             # on_draw()
         else:
@@ -198,6 +197,8 @@ class OledDisplay:
 
                 self._inc_frame(enter, start, render, time.perf_counter())
 
+    bangbuf = [0 for i in range(config.WIDTH * config.HEIGHT)]
+    BITS = [0, 1, 2, 3, 4, 5, 6, 7]
     def _cakma_image(self, image):
         """Set buffer to value of Python Imaging Library image.  The image should
         be in 1 bit mode and a size equal to the display size.
@@ -208,7 +209,17 @@ class OledDisplay:
         if imwidth != self.disp.width or imheight != self.disp.height:
             raise ValueError('Image must be same dimensions as display ({0}x{1}).' \
                 .format(self.disp.width, self.disp.height))
-        self.disp.buf[0:1024] = self.pilimg.tobytes()[0:1024]
+        buf = self.pilimg.tobytes()
+        index = 0
+        for i in range(0, len(buf)):
+            b = buf[i]
+            for bit in self.BITS:
+                self.bangbuf[index] = 255 if b & 0x80 else 0
+                index += 1
+                b <<= 1
+        for x in range(0, config.WIDTH):
+            for y in range(0, config.HEIGHT):
+
 
         # # Grab all the pixels from the image, faster than getpixel.
         # pix = image.load()
@@ -266,6 +277,20 @@ class OledDisplay:
     def on_button_right(self, pressed):
         pass
 
+    def dump_pilbuffer(self, buffer):
+        s = ""
+        lines = 0
+        for i in range(0, len(buffer)):
+            if i > 0 and (i % 16) == 0:
+                print(s)
+                s = ""
+                lines += 1
+            b = buffer[i]
+            for bit in range(8):
+                s += "*" if b & 0x80 else "."
+                b <<= 1
+        print(f"Length: {len(buffer)} Lines: {lines}")
+
     def render(self):
         if config.USE_EMU and not self.is_painting.get():
             log_paint.debug("Emu::render()")
@@ -273,6 +298,7 @@ class OledDisplay:
             self.window.clear()
             # TODO: Optimize multiple transforms
             pilbuffer = self.pilimg.tobytes()
+            # self.dump_pilbuffer(pilbuffer)
             ibuffer = []
             for b in pilbuffer:
                 for i in range(8):
