@@ -255,7 +255,7 @@ class OledDisplay:
             self.is_painting.set(True)
             self.window.clear()
             # TODO: Optimize multiple transforms
-            pilbuffer = self.pilimg.tobytes(encoder_name="vraw")
+            pilbuffer = self.pilimg.tobytes(encoder_name="raw")
             # self.dump_pilbuffer(pilbuffer)
             ibuffer = []
             for b in pilbuffer:
