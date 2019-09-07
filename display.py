@@ -210,48 +210,6 @@ class OledDisplay:
             raise ValueError('Image must be same dimensions as display ({0}x{1}).' \
                 .format(self.disp.width, self.disp.height))
         self.disp.buf[:] = self.pilimg.tobytes(encoder_name="vraw")
-        # index = 0
-        # for i in range(0, len(buf)):
-        #     b = buf[i]
-        #     for bit in self.BITS:
-        #         self.bangbuf[index] = 255 if b & 0x80 else 0
-        #         index += 1
-        #         b <<= 1
-        # for x in range(0, config.WIDTH):
-        #     for y in range(0, config.HEIGHT):
-
-
-        # # Grab all the pixels from the image, faster than getpixel.
-        # pix = image.load()
-        # # Iterate through the memory pages
-        # index = 0
-        # page = self.disp.height // 8
-        # for page in range(page):
-        #     # Iterate through all x axis columns.
-        #     for x in range(self.disp.width):
-        #         # Set the bits for the column of pixels at the current position.
-        #         bits = 0
-        #         # Don't use range here as it's a bit slow
-        #
-        #         # bits = 0x55
-        #         y = page * 8
-        #         bits = (0 if pix[(x, y + 7)] == 0 else 0x80) \
-        #                 | (0 if pix[(x, y + 6)] == 0 else 0x40) \
-        #                 | (0 if pix[(x, y + 5)] == 0 else 0x20) \
-        #                 | (0 if pix[(x, y + 4)] == 0 else 0x10) \
-        #                 | (0 if pix[(x, y + 3)] == 0 else 0x08) \
-        #                 | (0 if pix[(x, y + 2)] == 0 else 0x04) \
-        #                 | (0 if pix[(x, y + 1)] == 0 else 0x02) \
-        #                 | (0 if pix[(x, y + 0)] == 0 else 0x01)
-        #
-        #
-        #         # for bit in [0, 1, 2, 3, 4, 5, 6, 7]:
-        #         #     bits = bits << 1
-        #         #     bits |= 0 if pix[(x, y + 7 - bit)] == 0 else 1
-        #
-        #         # Update buffer byte and increment to next byte.
-        #         self.disp.buf[index] = bits
-        #         index += 1
 
     def default_handler(self, pressed):
         print("Unbound key, default handler")
