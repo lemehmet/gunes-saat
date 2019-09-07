@@ -209,16 +209,16 @@ class OledDisplay:
         if imwidth != self.disp.width or imheight != self.disp.height:
             raise ValueError('Image must be same dimensions as display ({0}x{1}).' \
                 .format(self.disp.width, self.disp.height))
-        buf = self.pilimg.tobytes()
-        index = 0
-        for i in range(0, len(buf)):
-            b = buf[i]
-            for bit in self.BITS:
-                self.bangbuf[index] = 255 if b & 0x80 else 0
-                index += 1
-                b <<= 1
-        for x in range(0, config.WIDTH):
-            for y in range(0, config.HEIGHT):
+        self.disp.buf[:] = self.pilimg.tobytes(encoder_name="vraw")
+        # index = 0
+        # for i in range(0, len(buf)):
+        #     b = buf[i]
+        #     for bit in self.BITS:
+        #         self.bangbuf[index] = 255 if b & 0x80 else 0
+        #         index += 1
+        #         b <<= 1
+        # for x in range(0, config.WIDTH):
+        #     for y in range(0, config.HEIGHT):
 
 
         # # Grab all the pixels from the image, faster than getpixel.
@@ -297,7 +297,7 @@ class OledDisplay:
             self.is_painting.set(True)
             self.window.clear()
             # TODO: Optimize multiple transforms
-            pilbuffer = self.pilimg.tobytes()
+            pilbuffer = self.pilimg.tobytes(encoder_name="vraw")
             # self.dump_pilbuffer(pilbuffer)
             ibuffer = []
             for b in pilbuffer:
