@@ -67,12 +67,12 @@ class RicoBall(View):
         self.paint()
 
     def on_button_a(self, pressed, repeated):
-        if pressed:
+        if pressed and not repeated:
             self._randomize()
         self.paint()
 
     def on_button_b(self, pressed, repeated):
-        if pressed:
+        if pressed and not repeated:
             self.a = _normalize(self.a + (PI / 12.0))
         self.paint()
 
