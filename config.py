@@ -17,7 +17,7 @@ CLOCK_FONT_SIZE = 18
 # Print performance metrics every second, or not. This doesn't add much of a lag but keeps printing.
 SHOW_STATS = True
 # Changing views are done with sliding animations, how many steps are required to complete the animation
-SLIDING_STEPS = 10
+SLIDING_STEPS = 128
 
 # Font file names, as appear in the fonts folder, size coefficient
 FONTS = [

@@ -1,6 +1,8 @@
 from enum import Enum, unique
 
+import config
 from common import log_paint, log_fw
+from display import dump_pilbuffer
 
 
 class View:
@@ -71,10 +73,15 @@ class Direction(Enum):
     LEFT = 3
     RIGHT = 4
 
+
 class Manager:
     _pressed_button = None
     _selecting_view = False
-    _scroll_direction = None
+    _sliding_direction = None
+    _sliding_step = 0
+    _slider_buffer = None
+    _prev_image = None
+    _next_image = None
 
     def __init__(self, root):
         self.root = root
@@ -101,7 +108,7 @@ class Manager:
     def on_sched_event(self):
         if self._pressed_button is not None:
             self._pressed_button(True, True)
-        elif self._scroll_direction is not None:
+        elif self._sliding_direction is not None:
             # TODO: Do the animation here
             pass
         self._on_sched_event()
@@ -121,8 +128,6 @@ class Manager:
         if pressed:
             self._selecting_view = not self._selecting_view
             log_fw.info(f"{'Selecting view' if self._selecting_view else 'Done view selection'}")
-        # self._handle_repeat(pressed, self._on_button_c)
-        # self._on_button_c(pressed, False)
 
     def on_button_up(self, pressed):
         if pressed and self._selecting_view:
@@ -152,11 +157,50 @@ class Manager:
             self._handle_repeat(pressed, self._on_button_right)
             self._on_button_right(pressed, False)
 
+    def render_sliding_view(self):
+        if self._sliding_direction is None:
+            # This shouldn't happen
+            raise RuntimeError("Sliding renderer cannot render when not sliding")
+        elif self._sliding_direction == Direction.UP:
+            pass
+        elif self._sliding_direction == Direction.DOWN:
+            pass
+        elif self._sliding_direction == Direction.LEFT:
+            pass
+        elif self._sliding_direction == Direction.RIGHT:
+            sep = (config.WIDTH // config.SLIDING_STEPS) * self._sliding_step
+            pages = config.HEIGHT // 8
+            index = 0
+            print(f"Sep: {sep} Step: {self._sliding_step}")
+            for page in range(pages):
+                offset = page * config.WIDTH
+                for x in range(0, sep):
+                    self._slider_buffer[index] = self._prev_image[offset + x]
+                    index += 1
+                for x in range(sep, config.WIDTH):
+                    self._slider_buffer[index] = self._next_image[offset + x]
+                    index += 1
+        self._sliding_step += 1
+        if self._sliding_step >= config.SLIDING_STEPS:
+            self._sliding_direction = None
+            self.current.display.set_external_framer(None)
+        #dump_pilbuffer(self._slider_buffer)
+        return self._slider_buffer
+
     def _move(self, target, direction):
         prev = self.current
         if target is not None:
-            self._scroll_direction = direction
+            self._sliding_direction = direction
+            self._sliding_step = 0
+            # Make sure display returns its real image buffer
+            self.current.display.set_external_framer(None)
+            self._prev_image = self.current.display.get_vraw_image()
             self._set_current(target)
+            self._next_image = self.current.display.get_vraw_image()
+            self._slider_buffer = []
+            self._slider_buffer[:] = self._prev_image[:]
+            # Store image buffers of previous and nexy views and set display to invoke manager's frame buffer source when painting
+            self.current.display.set_external_framer(self.render_sliding_view)
         return prev
 
     def move_right(self):

@@ -73,6 +73,7 @@ def dump_pilbuffer(buffer):
 
 class OledDisplay:
     mutex_disp = threading.Lock()
+    _external_frame_source = None
 
     def __init__(self):
         global display_instance
@@ -165,13 +166,15 @@ class OledDisplay:
         except KeyError:
             return self.default_handler
 
+    def set_external_framer(self, frame_source_func):
+        self._external_frame_source = frame_source_func
+
     def clear(self, color=0):
         if config.USE_EMU:
             # TODO Clean up for emu
             self.draw.rectangle((0, 0, config.WIDTH, config.HEIGHT), fill=1)
             self.update_image()
         else:
-
             with self.mutex_disp:
                 # Clear display.
                 if USE_MICRO:
@@ -207,13 +210,11 @@ class OledDisplay:
             enter = time.perf_counter()
             with self.mutex_disp:
                 start = time.perf_counter()
+                self.disp.buf = self.get_vraw_image() if self._external_frame_source is None else self._external_frame_source()
+                render = time.perf_counter()
                 if USE_MICRO:
-                    self.disp.buf = self.get_vraw_image()
-                    render = time.perf_counter()
                     self.disp.show()
                 else:
-                    self.disp.buf = self.get_vraw_image()
-                    render = time.perf_counter()
                     self.disp.display()
                 if config.SHOW_STATS:
                     self._inc_frame(enter, start, render, time.perf_counter())
@@ -251,7 +252,7 @@ class OledDisplay:
             self.is_painting.set(True)
             self.window.clear()
             # Extract pixels as vraw
-            pil_buf = self.get_vraw_image()
+            pil_buf = self.get_vraw_image() if self._external_frame_source is None else self._external_frame_source()
             # Create a linear buffer to hold expanded pyglet-L pixels
             lin_buf = [0 for i in range(len(pil_buf) * 8)]
             BITS = [0, 1, 2, 3, 4, 5, 6, 7]
