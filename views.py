@@ -166,11 +166,11 @@ class Manager:
         elif self._sliding_direction == Direction.DOWN:
             pass
         elif self._sliding_direction == Direction.LEFT:
-            self.hslide(config.WIDTH - ((config.WIDTH // config.SLIDING_STEPS) * self._sliding_step), self._prev_image, self._next_image)
+            self.hslide(config.WIDTH - ((config.WIDTH // config.HSLIDING_STEPS) * self._sliding_step), self._prev_image, self._next_image)
         elif self._sliding_direction == Direction.RIGHT:
-            self.hslide((config.WIDTH // config.SLIDING_STEPS) * self._sliding_step, self._prev_image, self._next_image)
+            self.hslide((config.WIDTH // config.HSLIDING_STEPS) * self._sliding_step, self._next_image, self._prev_image)
         self._sliding_step += 1
-        if self._sliding_step >= config.SLIDING_STEPS:
+        if self._sliding_step >= config.HSLIDING_STEPS:
             self._sliding_direction = None
             self.current.display.set_external_framer(None)
         return self._slider_buffer
