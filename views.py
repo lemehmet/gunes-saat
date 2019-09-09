@@ -166,26 +166,26 @@ class Manager:
         elif self._sliding_direction == Direction.DOWN:
             pass
         elif self._sliding_direction == Direction.LEFT:
-            pass
+            self.hslide(config.WIDTH - ((config.WIDTH // config.SLIDING_STEPS) * self._sliding_step), self._prev_image, self._next_image)
         elif self._sliding_direction == Direction.RIGHT:
-            sep = (config.WIDTH // config.SLIDING_STEPS) * self._sliding_step
-            pages = config.HEIGHT // 8
-            index = 0
-            print(f"Sep: {sep} Step: {self._sliding_step}")
-            for page in range(pages):
-                offset = page * config.WIDTH
-                for x in range(0, sep):
-                    self._slider_buffer[index] = self._prev_image[offset + x]
-                    index += 1
-                for x in range(sep, config.WIDTH):
-                    self._slider_buffer[index] = self._next_image[offset + x]
-                    index += 1
+            self.hslide((config.WIDTH // config.SLIDING_STEPS) * self._sliding_step, self._prev_image, self._next_image)
         self._sliding_step += 1
         if self._sliding_step >= config.SLIDING_STEPS:
             self._sliding_direction = None
             self.current.display.set_external_framer(None)
-        #dump_pilbuffer(self._slider_buffer)
         return self._slider_buffer
+
+    def hslide(self, sep, a, b):
+        pages = config.HEIGHT // 8
+        index = 0
+        for page in range(pages):
+            offset = page * config.WIDTH
+            for x in range(0, sep):
+                self._slider_buffer[index] = a[offset + x]
+                index += 1
+            for x in range(sep, config.WIDTH):
+                self._slider_buffer[index] = b[offset + x]
+                index += 1
 
     def _move(self, target, direction):
         prev = self.current
@@ -194,8 +194,10 @@ class Manager:
             self._sliding_step = 0
             # Make sure display returns its real image buffer
             self.current.display.set_external_framer(None)
+            self.paint()
             self._prev_image = self.current.display.get_vraw_image()
             self._set_current(target)
+            self.paint()
             self._next_image = self.current.display.get_vraw_image()
             self._slider_buffer = []
             self._slider_buffer[:] = self._prev_image[:]

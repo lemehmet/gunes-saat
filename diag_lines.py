@@ -25,7 +25,7 @@ class DiagnosticLine(View):
 
 
     def on_sched_event(self):
-        log_fw.debug("MovingBall::on_sched_event()")
+        log_fw.debug("DiagnosticLine::on_sched_event()")
         self.paint()
 
     def on_button_a(self, pressed, repeated):

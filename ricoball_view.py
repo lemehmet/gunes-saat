@@ -62,7 +62,7 @@ class RicoBall(View):
 
 
     def on_sched_event(self):
-        log_fw.debug("MovingBall::on_sched_event()")
+        log_fw.debug("RicoBall::on_sched_event()")
         self._move_ball()
         self.paint()
 
