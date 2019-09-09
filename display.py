@@ -24,11 +24,13 @@ else:
     import board
     import busio
     from digitalio import DigitalInOut, Direction, Pull
+
     if USE_MICRO:
         import adafruit_ssd1306
     else:
         import Adafruit_SSD1306
     import RPi.GPIO as GPIO
+
     RST = 24
 
 if config.USE_EMU:
@@ -54,6 +56,21 @@ else:
         display_instance.handle_button_event(channel)(pressed=not GPIO.input(channel))
 
 
+def dump_pilbuffer(buffer):
+    s = ""
+    lines = 0
+    for i in range(0, len(buffer)):
+        if i > 0 and (i % 16) == 0:
+            print(s)
+            s = ""
+            lines += 1
+        b = buffer[i]
+        for bit in range(8):
+            s += "*" if b & 0x80 else "."
+            b <<= 1
+    print(f"Length: {len(buffer)} Lines: {lines}")
+
+
 class OledDisplay:
     mutex_disp = threading.Lock()
 
@@ -64,6 +81,16 @@ class OledDisplay:
         self.is_painting = AtomicValue(False)
         self.pilimg = Image.new('1', (config.WIDTH, config.HEIGHT))
         self.draw = ImageDraw.Draw(self.pilimg)
+
+        if config.SHOW_STATS:
+            # Performance counters
+            _frames = 0
+            _started_at = None
+            _last_report = 0
+            _last_report_at = None
+            _avg_lock = 0
+            _avg_render = 0
+            _avg_write = 0
 
         if config.USE_EMU:
             # Create the window using pyglet
@@ -154,29 +181,23 @@ class OledDisplay:
                     self.disp.clear()
                     self.disp.display()
 
-    # Performance counters
-    _frames = 0
-    _started_at = None
-    _last_report = 0
-    _last_report_at = None
-    _avg_lock = 0
-    _avg_render = 0
-    _avg_write = 0
     def _inc_frame(self, enter, start, render, end):
-        self._avg_lock = ((self._avg_lock * self._frames) + (start - enter))/ (self._frames + 1)
-        self._avg_render = ((self._avg_render * self._frames) + (render - start))/ (self._frames + 1)
-        self._avg_write = ((self._avg_write * self._frames) + (end - render))/ (self._frames + 1)
-        self._frames += 1
-        if self._started_at is None:
-            self._started_at = enter
-        if self._last_report_at is None:
-            self._last_report_at = enter
-            self._last_report = 0
-        elif  (end - self._last_report_at) >= 1.0:
-            frames_since = self._frames - self._last_report
-            log_paint.info(f"FPS: {frames_since / (end - self._last_report_at):4.2f} {self._frames / (end - self._started_at):4.2f} Time to lock: {self._avg_lock:4.3f} render: {self._avg_render:4.3f} write: {self._avg_write:4.3f}")
-            self._last_report_at = end
-            self._last_report = self._frames
+        if config.SHOW_STATS:
+            self._avg_lock = ((self._avg_lock * self._frames) + (start - enter)) / (self._frames + 1)
+            self._avg_render = ((self._avg_render * self._frames) + (render - start)) / (self._frames + 1)
+            self._avg_write = ((self._avg_write * self._frames) + (end - render)) / (self._frames + 1)
+            self._frames += 1
+            if self._started_at is None:
+                self._started_at = enter
+            if self._last_report_at is None:
+                self._last_report_at = enter
+                self._last_report = 0
+            elif (end - self._last_report_at) >= 1.0:
+                frames_since = self._frames - self._last_report
+                log_paint.info(
+                    f"FPS: {frames_since / (end - self._last_report_at):4.2f} {self._frames / (end - self._started_at):4.2f} Time to lock: {self._avg_lock:4.3f} render: {self._avg_render:4.3f} write: {self._avg_write:4.3f}")
+                self._last_report_at = end
+                self._last_report = self._frames
 
     def update_image(self):
         if config.USE_EMU:
@@ -187,29 +208,18 @@ class OledDisplay:
             with self.mutex_disp:
                 start = time.perf_counter()
                 if USE_MICRO:
-                    self._cakma_image(self.pilimg)
+                    self.disp.buf = self.get_vraw_image()
                     render = time.perf_counter()
                     self.disp.show()
                 else:
-                    self.disp.image(self.pilimg)
+                    self.disp.buf = self.get_vraw_image()
                     render = time.perf_counter()
                     self.disp.display()
+                if config.SHOW_STATS:
+                    self._inc_frame(enter, start, render, time.perf_counter())
 
-                self._inc_frame(enter, start, render, time.perf_counter())
-
-    bangbuf = [0 for i in range(config.WIDTH * config.HEIGHT)]
-    BITS = [0, 1, 2, 3, 4, 5, 6, 7]
-    def _cakma_image(self, image):
-        """Set buffer to value of Python Imaging Library image.  The image should
-        be in 1 bit mode and a size equal to the display size.
-        """
-        if image.mode != '1':
-            raise ValueError('Image must be in mode 1.')
-        imwidth, imheight = image.size
-        if imwidth != self.disp.width or imheight != self.disp.height:
-            raise ValueError('Image must be same dimensions as display ({0}x{1}).' \
-                .format(self.disp.width, self.disp.height))
-        self.disp.buf[:] = self.pilimg.tobytes(encoder_name="vraw")
+    def get_vraw_image(self):
+        return self.pilimg.tobytes(encoder_name="vraw")
 
     def default_handler(self, pressed):
         print("Unbound key, default handler")
@@ -235,27 +245,13 @@ class OledDisplay:
     def on_button_right(self, pressed):
         pass
 
-    def dump_pilbuffer(self, buffer):
-        s = ""
-        lines = 0
-        for i in range(0, len(buffer)):
-            if i > 0 and (i % 16) == 0:
-                print(s)
-                s = ""
-                lines += 1
-            b = buffer[i]
-            for bit in range(8):
-                s += "*" if b & 0x80 else "."
-                b <<= 1
-        print(f"Length: {len(buffer)} Lines: {lines}")
-
     def render(self):
         if config.USE_EMU and not self.is_painting.get():
             log_paint.debug("Emu::render()")
             self.is_painting.set(True)
             self.window.clear()
             # Extract pixels as vraw
-            pil_buf = self.pilimg.tobytes(encoder_name='vraw')
+            pil_buf = self.get_vraw_image()
             # Create a linear buffer to hold expanded pyglet-L pixels
             lin_buf = [0 for i in range(len(pil_buf) * 8)]
             BITS = [0, 1, 2, 3, 4, 5, 6, 7]

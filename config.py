@@ -8,6 +8,7 @@ HEIGHT = 64
 BG = 0
 FG = 255
 CLOCK_FONT_SIZE = 18
+SHOW_STATS=True
 
 FONTS = [
     ('04B_30__.TTF', 1.0),
