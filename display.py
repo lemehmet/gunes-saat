@@ -16,7 +16,7 @@ if config.USE_EMU:
     import pyglet
     from pyglet.gl import *
     from pyglet import window
-    import six
+    from struct import pack
     from pyglet.window import FPSDisplay
 else:
     # Import libraries for oled display:
@@ -254,15 +254,23 @@ class OledDisplay:
             log_paint.debug("Emu::render()")
             self.is_painting.set(True)
             self.window.clear()
-            # TODO: Optimize multiple transforms
-            pilbuffer = self.pilimg.tobytes(encoder_name="raw")
-            # self.dump_pilbuffer(pilbuffer)
-            ibuffer = []
-            for b in pilbuffer:
-                for i in range(8):
-                    ibuffer.append(255 if b & 0x80 else 0)
-                    b <<= 1
-            frame = b''.join(list(map(lambda x: six.int2byte(x), ibuffer)))
+            # Extract pixels as vraw
+            pil_buf = self.pilimg.tobytes(encoder_name='vraw')
+            # Create a linear buffer to hold expanded pyglet-L pixels
+            lin_buf = [0 for i in range(len(pil_buf) * 8)]
+            BITS = [0, 1, 2, 3, 4, 5, 6, 7]
+            # Transform V-packed pixels to linear buffer
+            for i in range(len(pil_buf)):
+                x = i % config.WIDTH
+                page = (i // config.WIDTH) * 8
+                mask = 0x01
+                for b in BITS:
+                    y = page + b
+                    lin_buf[(y * config.WIDTH) + x] = 255 if pil_buf[i] & mask else 0
+                    mask <<= 1
+            # Make it a byte-string
+            frame = pack(f">{len(lin_buf)}B", *lin_buf)
+            # Create a pyglet image from it
             image = pyglet.image.ImageData(self.pilimg.width, self.pilimg.height, 'L', frame, pitch=-self.pilimg.width * 1)
             image.anchor_x = image.width // 2
             image.anchor_y = image.height // 2
