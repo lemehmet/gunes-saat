@@ -1,15 +1,25 @@
 import platform
 
+# True if running on raspberry pi
 RASPI = platform.machine().startswith("armv") and platform.system() == "Linux"
-FORCE_EMU = False  # Forces running code in UI emulation even on RasPi
+# Forces running code in UI emulation even on RasPi, helpful to test on a raspberry desktop
+FORCE_EMU = False
+# Use (pyglet) emulator to show display. Arrow keys = Joystick, A = A, Z = B, SPACE = C (Joystick center)
 USE_EMU = True if not RASPI else True if FORCE_EMU else False
+# Width and height in pixels
 WIDTH = 128
 HEIGHT = 64
+# Background and foreground colors to use. Either black (0) or white (255)
 BG = 0
 FG = 255
+# Nominal font size for clock, below font list has a normalization factor since font heights wildy vary
 CLOCK_FONT_SIZE = 18
-SHOW_STATS=True
+# Print performance metrics every second, or not. This doesn't add much of a lag but keeps printing.
+SHOW_STATS = True
+# Changing views are done with sliding animations, how many steps are required to complete the animation
+SLIDING_STEPS = 10
 
+# Font file names, as appear in the fonts folder, size coefficient
 FONTS = [
     ('04B_30__.TTF', 1.0),
     ('Minecraftia-Regular.ttf', 1.2),
@@ -50,6 +60,7 @@ FONTS = [
 
 print(f"Running on raspi: {RASPI}, using emu: {USE_EMU}")
 
+# Button mappings
 if USE_EMU:
     from pyglet.window import key
 
