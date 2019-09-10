@@ -9,6 +9,7 @@ USE_EMU = True if not RASPI else True if FORCE_EMU else False
 # Width and height in pixels
 WIDTH = 128
 HEIGHT = 64
+PAGES = HEIGHT // 8
 # Background and foreground colors to use. Either black (0) or white (255)
 BG = 0
 FG = 255
@@ -17,45 +18,48 @@ CLOCK_FONT_SIZE = 18
 # Print performance metrics every second, or not. This doesn't add much of a lag but keeps printing.
 SHOW_STATS = True
 # Changing views are done with sliding animations, how many steps are required to complete the animation
-SLIDING_STEPS = 32
+HSLIDING_STEPS = 16
+# Finer vertical granularity than the page size is PITA
+VSLIDING_STEPS = 8
+VSLIDING_STEPS = HEIGHT // 8 if VSLIDING_STEPS > (HEIGHT // 8) else VSLIDING_STEPS
 
 # Font file names, as appear in the fonts folder, size coefficient
 FONTS = [
-    ('04B_30__.TTF', 1.0),
-    ('Minecraftia-Regular.ttf', 1.2),
-    ('pixelmix.ttf', 1.2),
-    ('Retron2000.ttf', 1.4),
-    ('slkscr.ttf', 1.4),
-    ('Squarewave-Italic.ttf', 2.0),
-    ('Squarewave.ttf', 2.0),
-    ('VCR_OSD_MONO_1.001.ttf', 1.0),
-    ('3Dventure.ttf', 1.5),
-    ('04B_19__.TTF', 1.5),
-    ('advanced_pixel_lcd-7.ttf', 0.8),
-    ('Alkhemikal.ttf', 2.0),
-    ('cube.ttf', 1.0),
-    ('DigitalDisco-Thin.ttf', 1.8),
-    ('edunline.ttf', 1.4),
-    ('m04.TTF', 0.7),
-    ('Nintendo-DS-BIOS.ttf', 2.0),
-    ('Perfect-DOS-VGA-437.ttf', 1.2),
-    ('PIXEARG_.TTF', 1.0),
-    ('pixelpoiiz.ttf', 1.2),
-    ('Pokemon Classic.ttf', 0.8),
-    ('Super-Mario-Bros--3.ttf', 1.0),
-    ('Vermin Vibes 1989.ttf', 2.0),
-    ('Aardvark Cwm Type.ttf', 2.5),
-    ('BMNEA___.TTF', 1.6),
-    ('BMSTA___.TTF', 0.8),
-    ('Extrude.ttf', 1.8),
-    ('GhastlyPixe.ttf', 1.6),
-    ('GrapeSoda.ttf', 1.8),
-    ('ice_pixel-7.ttf', 1.8),
-    ('m20.TTF', 1.0),
-    ('Pixel-Noir.ttf', 1.0),
-    ('Pixeled English Font.ttf', 1.2),
-    ('TINYBBA_.TTF', 1.0),
-    ('V5_bloques.ttf', 0.8),
+    ('04B_30__.TTF', 1.0),              # 0
+    ('Minecraftia-Regular.ttf', 1.2),   # 1
+    ('pixelmix.ttf', 1.2),              # 2
+    ('Retron2000.ttf', 1.4),            # 3
+    ('slkscr.ttf', 1.4),                # 4
+    ('Squarewave-Italic.ttf', 2.0),     # 5
+    ('Squarewave.ttf', 2.0),            # 6
+    ('VCR_OSD_MONO_1.001.ttf', 1.0),    # 7
+    ('3Dventure.ttf', 1.5),             # 8
+    ('04B_19__.TTF', 1.5),              # 9
+    ('advanced_pixel_lcd-7.ttf', 0.8),  # 10
+    ('Alkhemikal.ttf', 2.0),            # 11
+    ('cube.ttf', 1.0),                  # 12
+    ('DigitalDisco-Thin.ttf', 1.8),     # 13
+    ('edunline.ttf', 1.4),              # 14
+    ('m04.TTF', 0.7),                   # 15
+    ('Nintendo-DS-BIOS.ttf', 2.0),      # 16
+    ('Perfect-DOS-VGA-437.ttf', 1.2),   # 17
+    ('PIXEARG_.TTF', 1.0),              # 18
+    ('pixelpoiiz.ttf', 1.2),            # 19
+    ('Pokemon Classic.ttf', 0.8),       # 20
+    ('Super-Mario-Bros--3.ttf', 1.0),   # 21
+    ('Vermin Vibes 1989.ttf', 2.0),     # 22
+    ('Aardvark Cwm Type.ttf', 2.5),     # 23
+    ('BMNEA___.TTF', 1.6),              # 24
+    ('BMSTA___.TTF', 0.8),              # 25
+    ('Extrude.ttf', 1.8),               # 26
+    ('GhastlyPixe.ttf', 1.6),           # 27
+    ('GrapeSoda.ttf', 1.8),             # 28
+    ('ice_pixel-7.ttf', 1.8),           # 29
+    ('m20.TTF', 1.0),                   # 30
+    ('Pixel-Noir.ttf', 1.0),            # 31
+    ('Pixeled English Font.ttf', 1.2),  # 32
+    ('TINYBBA_.TTF', 1.0),              # 33
+    ('V5_bloques.ttf', 0.8),            # 34
 ]
 
 print(f"Running on raspi: {RASPI}, using emu: {USE_EMU}")

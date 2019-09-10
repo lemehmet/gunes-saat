@@ -23,7 +23,6 @@ class DiagnosticLine(View):
         self.display.draw.rectangle((0, 0, self.display.mx, self.display.my), fill=config.BG, outline=config.BG)
         self.display.draw.line(((self.x, self.y), (self.x + self.len, self.y)), fill=config.FG)
 
-
     def on_sched_event(self):
         log_fw.debug("DiagnosticLine::on_sched_event()")
         self.paint()

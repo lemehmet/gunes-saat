@@ -162,23 +162,51 @@ class Manager:
             # This shouldn't happen
             raise RuntimeError("Sliding renderer cannot render when not sliding")
         elif self._sliding_direction == Direction.UP:
-            pass
+            self.vslide()
         elif self._sliding_direction == Direction.DOWN:
-            pass
+            self.vslide()
         elif self._sliding_direction == Direction.LEFT:
             self.hslide(config.WIDTH - ((config.WIDTH // config.HSLIDING_STEPS) * self._sliding_step), self._prev_image, self._next_image)
         elif self._sliding_direction == Direction.RIGHT:
             self.hslide((config.WIDTH // config.HSLIDING_STEPS) * self._sliding_step, self._next_image, self._prev_image)
-        self._sliding_step += 1
-        if self._sliding_step >= config.HSLIDING_STEPS:
-            self._sliding_direction = None
-            self.current.display.set_external_framer(None)
+
+        # Horizontal and vertical sliding is different
+        if self._sliding_direction == Direction.LEFT or self._sliding_direction == Direction.RIGHT:
+            self._sliding_step += 1
+            if self._sliding_step >= config.HSLIDING_STEPS:
+                self._sliding_direction = None
+                self.current.display.set_external_framer(None)
+        else:
+            self._sliding_step += config.PAGES // config.VSLIDING_STEPS
+            if self._sliding_step >= config.VSLIDING_STEPS:
+                self._sliding_direction = None
+                self.current.display.set_external_framer(None)
         return self._slider_buffer
 
-    def hslide(self, sep, a, b):
-        pages = config.HEIGHT // 8
+    def vslide(self):
         index = 0
-        for page in range(pages):
+        if self._sliding_direction == Direction.UP:
+            r1 = range(config.PAGES - 1, self._sliding_step)
+            r2 = range(self._sliding_step, -1)
+        else:
+            r1 = range(0, self._sliding_step)
+            r2 = range(self._sliding_step, config.PAGES)
+        for page in r1:
+            offset = page * config.WIDTH
+            for x in range(0, config.WIDTH):
+                print(f"A {index} <- {offset} + {x} {offset + x}")
+                self._slider_buffer[index] = self._next_image[offset + x]
+                index += 1
+        for page in r2:
+            offset = page * config.WIDTH
+            for x in range(0, config.WIDTH):
+                print(f"B {index} <- {offset} + {x} {offset + x}")
+                self._slider_buffer[index] = self._prev_image[offset + x]
+                index += 1
+
+    def hslide(self, sep, a, b):
+        index = 0
+        for page in range(config.PAGES):
             offset = page * config.WIDTH
             for x in range(0, sep):
                 self._slider_buffer[index] = a[offset + x]
@@ -190,6 +218,7 @@ class Manager:
     def _move(self, target, direction):
         prev = self.current
         if target is not None:
+            log_fw.info(f"Moving to {direction.name} from {self.current} to {target}")
             self._sliding_direction = direction
             self._sliding_step = 0
             # Make sure display returns its real image buffer
