@@ -82,6 +82,7 @@ class Manager:
     _slider_buffer = None
     _prev_image = None
     _next_image = None
+    _effect_cycle = False
 
     def __init__(self, root):
         self.root = root
@@ -162,28 +163,39 @@ class Manager:
             # This shouldn't happen
             raise RuntimeError("Sliding renderer cannot render when not sliding")
         elif self._sliding_direction == Direction.UP:
-            self.vslide()
+            self._vslide()
         elif self._sliding_direction == Direction.DOWN:
-            self.vslide()
+            self._vslide()
         elif self._sliding_direction == Direction.LEFT:
-            self.hslide(config.WIDTH - ((config.WIDTH // config.HSLIDING_STEPS) * self._sliding_step), self._prev_image, self._next_image)
+            self._hslide(config.WIDTH - ((config.WIDTH // config.HSLIDING_STEPS) * self._sliding_step), self._prev_image, self._next_image)
         elif self._sliding_direction == Direction.RIGHT:
-            self.hslide((config.WIDTH // config.HSLIDING_STEPS) * self._sliding_step, self._next_image, self._prev_image)
+            self._hslide((config.WIDTH // config.HSLIDING_STEPS) * self._sliding_step, self._next_image, self._prev_image)
 
         # Horizontal and vertical sliding is different
         if self._sliding_direction == Direction.LEFT or self._sliding_direction == Direction.RIGHT:
-            self._sliding_step += 1
+            self._sliding_step += 1 if not self._effect_cycle else 0
             if self._sliding_step >= config.HSLIDING_STEPS:
                 self._sliding_direction = None
                 self.current.display.set_external_framer(None)
         else:
-            self._sliding_step += config.PAGES // config.VSLIDING_STEPS
+            self._sliding_step += config.PAGES // config.VSLIDING_STEPS if not self._effect_cycle else 0
             if self._sliding_step >= config.VSLIDING_STEPS:
                 self._sliding_direction = None
                 self.current.display.set_external_framer(None)
+        self._effect_cycle = not self._effect_cycle
         return self._slider_buffer
 
-    def vslide(self):
+    def _copy_page(self, index, page):
+        offset = page * config.WIDTH
+        for x in range(0, config.WIDTH):
+            if self._effect_cycle and page == self._sliding_step:
+                self._slider_buffer[index] = config.FG
+            else:
+                self._slider_buffer[index] = self._next_image[offset + x]
+            index += 1
+        return index
+
+    def _vslide(self):
         index = 0
         if self._sliding_direction == Direction.UP:
             r1 = range(config.PAGES - 1, self._sliding_step)
@@ -192,19 +204,11 @@ class Manager:
             r1 = range(0, self._sliding_step)
             r2 = range(self._sliding_step, config.PAGES)
         for page in r1:
-            offset = page * config.WIDTH
-            for x in range(0, config.WIDTH):
-                print(f"A {index} <- {offset} + {x} {offset + x}")
-                self._slider_buffer[index] = self._next_image[offset + x]
-                index += 1
+            index = self._copy_page(index, page)
         for page in r2:
-            offset = page * config.WIDTH
-            for x in range(0, config.WIDTH):
-                print(f"B {index} <- {offset} + {x} {offset + x}")
-                self._slider_buffer[index] = self._prev_image[offset + x]
-                index += 1
+            index = self._copy_page(index, page)
 
-    def hslide(self, sep, a, b):
+    def _hslide(self, sep, a, b):
         index = 0
         for page in range(config.PAGES):
             offset = page * config.WIDTH
@@ -212,7 +216,10 @@ class Manager:
                 self._slider_buffer[index] = a[offset + x]
                 index += 1
             for x in range(sep, config.WIDTH):
-                self._slider_buffer[index] = b[offset + x]
+                if x == sep and self._effect_cycle:
+                    self._slider_buffer[index] = config.FG
+                else:
+                    self._slider_buffer[index] = b[offset + x]
                 index += 1
 
     def _move(self, target, direction):
@@ -221,6 +228,7 @@ class Manager:
             log_fw.info(f"Moving to {direction.name} from {self.current} to {target}")
             self._sliding_direction = direction
             self._sliding_step = 0
+            self._effect_cycle = True
             # Make sure display returns its real image buffer
             self.current.display.set_external_framer(None)
             self.paint()
