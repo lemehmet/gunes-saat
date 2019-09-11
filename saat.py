@@ -82,8 +82,8 @@ class Saat(display.OledDisplay):
             display.OledDisplay.on_sched_event(self)
             self.vm.on_sched_event()
             self.update_image()
-        except AttributeError:
-            log_fw.warning("Too early to receive scheduler events, will try again")
+        except AttributeError as err:
+            log_fw.warning(f"Too early to receive scheduler events, will try again {err.with_traceback()}")
 
     def on_button_a(self, pressed):
         self.vm.on_button_a(pressed)

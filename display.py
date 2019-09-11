@@ -85,13 +85,13 @@ class OledDisplay:
 
         if config.SHOW_STATS:
             # Performance counters
-            _frames = 0
-            _started_at = None
-            _last_report = 0
-            _last_report_at = None
-            _avg_lock = 0
-            _avg_render = 0
-            _avg_write = 0
+            self._frames = 0
+            self._started_at = None
+            self._last_report = 0
+            self._last_report_at = None
+            self._avg_lock = 0
+            self._avg_render = 0
+            self._avg_write = 0
 
         if config.USE_EMU:
             # Create the window using pyglet
