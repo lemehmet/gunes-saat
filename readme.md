@@ -7,8 +7,8 @@ The framework has an emulator that features an soft display shown in a window an
 * Raspberry Pi Zero W, other pies work, too.
 * [Adafruit 128x64 OLED Bonnet for Raspberry Pi](https://www.adafruit.com/product/3531). 
 It is possible to use other displays with some customization:
-  * The pixel format adaptation
-  * Button assignments
+    * The pixel format adaptation
+    * Button assignments
 * [Adafruit I2S 3W Stereo Speaker Bonnet for Raspberry Pi - Mini Kit](https://www.adafruit.com/product/3346).
 Pi Zero does not have an headphone output and I2S sounds better anyway. Anything plays nicely with ALSA works.
 If you are using non-zero pies, you can simply connect your favorite amplifier to the headphone jack.
