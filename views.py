@@ -132,33 +132,33 @@ class Manager:
 
     def on_button_up(self, pressed):
         if pressed and self._selecting_view:
-            self.move_up()
+            self._move_up()
         else:
             self._handle_repeat(pressed, self._on_button_up)
             self._on_button_up(pressed, False)
 
     def on_button_down(self, pressed):
         if pressed and self._selecting_view:
-            self.move_down()
+            self._move_down()
         else:
             self._handle_repeat(pressed, self._on_button_down)
             self._on_button_down(pressed, False)
 
     def on_button_left(self, pressed):
         if pressed and self._selecting_view:
-            self.move_left()
+            self._move_left()
         else:
             self._handle_repeat(pressed, self._on_button_left)
             self._on_button_left(pressed, False)
 
     def on_button_right(self, pressed):
         if pressed and self._selecting_view:
-            self.move_right()
+            self._move_right()
         else:
             self._handle_repeat(pressed, self._on_button_right)
             self._on_button_right(pressed, False)
 
-    def render_sliding_view(self):
+    def _render_sliding_view(self):
         if self._sliding_direction is None:
             # This shouldn't happen
             raise RuntimeError("Sliding renderer cannot render when not sliding")
@@ -175,19 +175,34 @@ class Manager:
         if self._sliding_direction == Direction.LEFT or self._sliding_direction == Direction.RIGHT:
             self._sliding_step += 1 if not self._effect_cycle else 0
             if self._sliding_step >= config.HSLIDING_STEPS:
-                self._terminate_sliding()
+                self._terminate_sliding_animation()
         elif self._sliding_direction == Direction.DOWN:
             self._sliding_step += config.PAGES // config.VSLIDING_STEPS if not self._effect_cycle else 0
             if self._sliding_step >= config.VSLIDING_STEPS:
-                self._terminate_sliding()
+                self._terminate_sliding_animation()
         else:
             self._sliding_step -= 1
             if self._sliding_step <= 0:
-                self._terminate_sliding()
+                self._terminate_sliding_animation()
         self._effect_cycle = not self._effect_cycle
         return self._slider_buffer
 
-    def _terminate_sliding(self):
+    def _start_sliding_animation(self, target, direction):
+        self._sliding_direction = direction
+        self._sliding_step = 0 if self._sliding_direction != Direction.UP else config.PAGES
+        self._effect_cycle = True
+        # Make sure display returns its real image buffer
+        self.current.display.set_external_framer(None)
+        self.paint()
+        self._prev_image[:] = self.current.display.get_vraw_image()
+        self._set_current(target)
+        self.paint()
+        self._next_image[:] = self.current.display.get_vraw_image()
+        self._slider_buffer = bytearray(len(self._prev_image))
+        # Store image buffers of previous and nexy views and set display to invoke manager's frame buffer source when painting
+        self.current.display.set_external_framer(self._render_sliding_view)
+
+    def _terminate_sliding_animation(self):
         self._sliding_direction = None
         self.current.display.set_external_framer(None)
 
@@ -205,18 +220,9 @@ class Manager:
 
     def _vslide(self):
         index = 0
-        r1 = range(0, self._sliding_step)
-        r2 = range(self._sliding_step, config.PAGES)
-        # if self._sliding_direction == Direction.UP:
-        #     r1 = range(config.PAGES - 1, config.PAGES - self._sliding_step, -1)
-        #     r2 = range(config.PAGES - self._sliding_step - 1, -1, -1)
-        # else:
-        #     r1 = range(0, self._sliding_step)
-        #     r2 = range(self._sliding_step, config.PAGES)
-        log_view.debug(f"Sliding {self._sliding_direction.name}, r1: {r1} r2: {r2}")
-        for page in r1:
+        for page in range(0, self._sliding_step):
             index = self._copy_page(index, page)
-        for page in r2:
+        for page in range(self._sliding_step, config.PAGES):
             index = self._copy_page(index, page)
 
     def _hslide(self, sep, a, b):
@@ -237,29 +243,17 @@ class Manager:
         prev = self.current
         if target is not None:
             log_fw.info(f"Moving to {direction.name} from {self.current} to {target}")
-            self._sliding_direction = direction
-            self._sliding_step = 0 if self._sliding_direction != Direction.UP else config.PAGES
-            self._effect_cycle = True
-            # Make sure display returns its real image buffer
-            self.current.display.set_external_framer(None)
-            self.paint()
-            self._prev_image = self.current.display.get_vraw_image()
-            self._set_current(target)
-            self.paint()
-            self._next_image = self.current.display.get_vraw_image()
-            self._slider_buffer = bytearray(len(self._prev_image))
-            # Store image buffers of previous and nexy views and set display to invoke manager's frame buffer source when painting
-            self.current.display.set_external_framer(self.render_sliding_view)
+            self._start_sliding_animation(target, direction)
         return prev
 
-    def move_right(self):
+    def _move_right(self):
         return self._move(self.current.right, Direction.RIGHT)
 
-    def move_left(self):
+    def _move_left(self):
         return self._move(self.current.left, Direction.LEFT)
 
-    def move_up(self):
+    def _move_up(self):
         return self._move(self.current.up, Direction.UP)
 
-    def move_down(self):
+    def _move_down(self):
         return self._move(self.current.down, Direction.DOWN)

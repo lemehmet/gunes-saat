@@ -203,14 +203,11 @@ class OledDisplay:
                 self._last_report = self._frames
 
     def update_image(self):
-        if config.USE_EMU:
-            pass
-            # on_draw()
-        else:
+        if not config.USE_EMU:
             enter = time.perf_counter()
             with self.mutex_disp:
                 start = time.perf_counter()
-                self.disp.buf = self.get_vraw_image() if self._external_frame_source is None else self._external_frame_source()
+                self.disp.buf[:] = self.get_vraw_image()[:] if self._external_frame_source is None else self._external_frame_source()[:]
                 render = time.perf_counter()
                 if USE_MICRO:
                     self.disp.show()
