@@ -10,6 +10,10 @@ USE_EMU = True if not RASPI else True if FORCE_EMU else False
 WIDTH = 128
 HEIGHT = 64
 PAGES = HEIGHT // 8
+
+# Display update frequency
+UPDATE_FREQ = 50
+
 # Background and foreground colors to use. Either black (0) or white (255)
 BG = 0
 FG = 255

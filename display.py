@@ -7,6 +7,7 @@ from PIL import Image, ImageDraw
 
 from atomic_value import AtomicValue
 from common import log_paint, log_fw
+from views import Manager
 
 display_instance = None
 
@@ -72,7 +73,7 @@ def dump_pilbuffer(buffer):
 
 
 class OledDisplay:
-    mutex_disp = threading.Lock()
+    mutex_disp = threading.RLock()
     _external_frame_source = None
 
     def __init__(self):
@@ -133,6 +134,7 @@ class OledDisplay:
                 GPIO.setup(button, GPIO.IN, pull_up_down=GPIO.PUD_UP)
                 GPIO.add_event_detect(button, GPIO.BOTH, callback=gpio_callback, bouncetime=20)
 
+        self.vm = Manager()
         self.clear()
         self.scheduler = sched.scheduler(time.time, time.sleep)
         # First event comes later
@@ -146,10 +148,15 @@ class OledDisplay:
             self.is_running.set(False)
 
     def on_sched_event(self):
-        if not self.is_running.get():
-            print("Terminating scheduler")
-            return
-        self.sched_event = self.scheduler.enter(0.02, 1, self.on_sched_event, ())
+        try:
+            self.vm.on_sched_event()
+            self.update_image()
+            if not self.is_running.get():
+                print("Terminating scheduler")
+                return
+            self.sched_event = self.scheduler.enter(1.0 / config.UPDATE_FREQ, 1, self.on_sched_event, ())
+        except AttributeError as err:
+            log_fw.warning(f"Too early to receive scheduler events, will try again {err.with_traceback()}")
 
     def handle_button_event(self, button):
         mapping = {

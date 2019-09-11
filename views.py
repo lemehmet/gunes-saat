@@ -2,7 +2,6 @@ from enum import Enum, unique
 
 import config
 from common import log_paint, log_fw, log_view
-from display import dump_pilbuffer
 
 
 class View:
@@ -39,6 +38,9 @@ class View:
         return prev
 
     def activate(self):
+        pass
+
+    def deactivate(self):
         pass
 
     def on_sched_event(self):
@@ -83,12 +85,18 @@ class Manager:
     _prev_image = None
     _next_image = None
     _effect_cycle = False
+    current = None
 
-    def __init__(self, root):
+    def __init__(self, root = None):
+        if root is not None:
+            self.set_root_view(root)
+
+    def set_root_view(self, root):
         self.root = root
         self._set_current(self.root)
 
     def _set_current(self, view):
+        old_view = None if self.current is None else self.current
         self.current = view
         self._paint = self.current.paint
         self.activate = self.current.activate
@@ -100,11 +108,14 @@ class Manager:
         self._on_button_right = self.current.on_button_right
         self._on_button_up = self.current.on_button_up
         self._on_button_down = self.current.on_button_down
+        if old_view is not None:
+            old_view.deactivate()
         self.activate()
 
     def paint(self):
         log_paint.debug("Manager::paint()")
-        self._paint()
+        with self.current.display.mutex_disp:
+            self._paint()
 
     def on_sched_event(self):
         if self._pressed_button is not None:
@@ -112,7 +123,8 @@ class Manager:
         elif self._sliding_direction is not None:
             # TODO: Do the animation here
             pass
-        self._on_sched_event()
+        if self.current is not None:
+            self._on_sched_event()
 
     def _handle_repeat(self, pressed, handler):
         self._pressed_button = handler if pressed else None
