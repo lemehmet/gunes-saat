@@ -14,26 +14,26 @@ Pi Zero does not have an headphone output and I2S sounds better anyway. Anything
 If you are using non-zero pies, you can simply connect your favorite amplifier to the headphone jack.
 * [Medium Surface Transducer with Wires - 4 Ohm 3 Watt](https://www.adafruit.com/product/1785). 
 This small paperweight makes all the difference, it turns the bed frame to a speaker. Some notes on usage: 
-  * Make sure your amplifier's output impedence matches and can drive these.
-  * There is no point in attaching two of them to the same surface.
-  * They need to be rigidly attached to the surface.
-  * The cables of the model are tiny and fragile.
+    * Make sure your amplifier's output impedence matches and can drive these.
+    * There is no point in attaching two of them to the same surface.
+    * They need to be rigidly attached to the surface.
+    * The cables of the model are tiny and fragile.
 * The usual necessities
-  * [2x20 pin strip](https://www.adafruit.com/product/2822)
-  * A good power supply and a powered USB hub
-  * A reliable USB OTG cable
-  * A keyboard, mini hdmi cable for when things go wrong
-  * Soldering iron, wirestripper etc.
+    * [2x20 pin strip](https://www.adafruit.com/product/2822)
+    * A good power supply and a powered USB hub
+    * A reliable USB OTG cable
+    * A keyboard, mini hdmi cable for when things go wrong
+    * Soldering iron, wirestripper etc.
  
 ## Software Installation
 * First install raspian, lite version is more than enough. Follow the directions on https://www.raspberrypi.org/downloads/raspbian/.
 * Install [circuit python](https://learn.adafruit.com/circuitpython-on-raspberrypi-linux/installing-circuitpython-on-raspberry-pi)
 * Install Adafruit 128x64 OLED Bonnet support packages from [here](https://learn.adafruit.com/adafruit-128x64-oled-bonnet-for-raspberry-pi/usage)
 * Install Pillow fork that adds native pixel format, improves rendering performance on rpi zero by 50x.
-  * Remove repo version of Pillow: `sudo apt remove python3-pil`
-  * Install libraries for building Pillow: `sudo apt-get install libjpeg-dev libtiff-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev`
-  * Clone the fork `git clone https://github.com/lemehmet/Pillow.git`
-  * Change to the project directory `sudo pip3 install .`    
+    * Remove repo version of Pillow: `sudo apt remove python3-pil`
+    * Install libraries for building Pillow: `sudo apt-get install libjpeg-dev libtiff-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev`
+    * Clone the fork `git clone https://github.com/lemehmet/Pillow.git`
+    * Change to the project directory `sudo pip3 install .`    
 * Fork/Clone the saat project `git clone https://lemehmet@bitbucket.org/lemehmet/gunes-saat.git
 
 ## Wiring
@@ -41,8 +41,8 @@ This small paperweight makes all the difference, it turns the bed frame to a spe
 * [OLED schematics](https://cdn-learn.adafruit.com/assets/assets/000/042/397/original/raspberry_pi_schem.png?1496866920)
 
 ![OLED Schematics](https://cdn-learn.adafruit.com/assets/assets/000/042/397/medium640/raspberry_pi_schem.png)
-  * If you are using 2x20 pin strips to connect two boards, solder audio in-between raspberry pi and oled display 
-  for the robustness against wear and tear.
+  
+* If you are using 2x20 pin strips to connect two boards, solder audio in-between raspberry pi and oled display for the robustness against wear and tear.
 * Follow the guideline for Adafruit I2S 3W Stereo Speaker Bonnet at [here](https://learn.adafruit.com/adafruit-speaker-bonnet-for-raspberry-pi/pinouts)
 * [I2S Schematics](https://cdn-learn.adafruit.com/assets/assets/000/037/882/original/raspberry_pi_schem.png)
 
@@ -168,7 +168,7 @@ class RicoBall(View):
 ```
 
 #### Button Events
-There 7 buttons defined, 4 navigation/joystick, 2 tactile (A and B) and 1 joystick center (C). The framework propagates
+There are 7 buttons defined, 4 navigation/joystick, 2 tactile (A and B) and 1 joystick center (C). The framework propagates
 the button events to views and invokes the related method. Feel free to invoke paint within these methods, paint is not
 part of the event queue.
 Button-C is dedicated to navigation and should not be used.
