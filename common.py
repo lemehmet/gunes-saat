@@ -17,4 +17,4 @@ log_paint = logging.getLogger("paint")
 log_paint.setLevel(logging.INFO)
 
 log_view = logging.getLogger("view")
-log_view.setLevel(logging.INFO)
+log_view.setLevel(logging.DEBUG)

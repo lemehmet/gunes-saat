@@ -1,7 +1,7 @@
 from enum import Enum, unique
 
 import config
-from common import log_paint, log_fw
+from common import log_paint, log_fw, log_view
 from display import dump_pilbuffer
 
 
@@ -175,34 +175,45 @@ class Manager:
         if self._sliding_direction == Direction.LEFT or self._sliding_direction == Direction.RIGHT:
             self._sliding_step += 1 if not self._effect_cycle else 0
             if self._sliding_step >= config.HSLIDING_STEPS:
-                self._sliding_direction = None
-                self.current.display.set_external_framer(None)
-        else:
+                self._terminate_sliding()
+        elif self._sliding_direction == Direction.DOWN:
             self._sliding_step += config.PAGES // config.VSLIDING_STEPS if not self._effect_cycle else 0
             if self._sliding_step >= config.VSLIDING_STEPS:
-                self._sliding_direction = None
-                self.current.display.set_external_framer(None)
+                self._terminate_sliding()
+        else:
+            self._sliding_step -= 1
+            if self._sliding_step <= 0:
+                self._terminate_sliding()
         self._effect_cycle = not self._effect_cycle
         return self._slider_buffer
 
+    def _terminate_sliding(self):
+        self._sliding_direction = None
+        self.current.display.set_external_framer(None)
+
     def _copy_page(self, index, page):
         offset = page * config.WIDTH
-        for x in range(0, config.WIDTH):
-            if self._effect_cycle and page == self._sliding_step:
-                self._slider_buffer[index] = config.FG
-            else:
+        if self._effect_cycle and page == self._sliding_step:
+            log_view.debug(f"Drawing effect line on page {page}")
+            self._slider_buffer[offset:offset + config.WIDTH] = [config.FG for i in range(0, config.WIDTH)]
+            index += config.WIDTH
+        else:
+            for x in range(0, config.WIDTH):
                 self._slider_buffer[index] = self._next_image[offset + x]
-            index += 1
+                index += 1
         return index
 
     def _vslide(self):
         index = 0
-        if self._sliding_direction == Direction.UP:
-            r1 = range(config.PAGES - 1, self._sliding_step)
-            r2 = range(self._sliding_step, -1)
-        else:
-            r1 = range(0, self._sliding_step)
-            r2 = range(self._sliding_step, config.PAGES)
+        r1 = range(0, self._sliding_step)
+        r2 = range(self._sliding_step, config.PAGES)
+        # if self._sliding_direction == Direction.UP:
+        #     r1 = range(config.PAGES - 1, config.PAGES - self._sliding_step, -1)
+        #     r2 = range(config.PAGES - self._sliding_step - 1, -1, -1)
+        # else:
+        #     r1 = range(0, self._sliding_step)
+        #     r2 = range(self._sliding_step, config.PAGES)
+        log_view.debug(f"Sliding {self._sliding_direction.name}, r1: {r1} r2: {r2}")
         for page in r1:
             index = self._copy_page(index, page)
         for page in r2:
@@ -227,7 +238,7 @@ class Manager:
         if target is not None:
             log_fw.info(f"Moving to {direction.name} from {self.current} to {target}")
             self._sliding_direction = direction
-            self._sliding_step = 0
+            self._sliding_step = 0 if self._sliding_direction != Direction.UP else config.PAGES
             self._effect_cycle = True
             # Make sure display returns its real image buffer
             self.current.display.set_external_framer(None)
@@ -236,8 +247,7 @@ class Manager:
             self._set_current(target)
             self.paint()
             self._next_image = self.current.display.get_vraw_image()
-            self._slider_buffer = []
-            self._slider_buffer[:] = self._prev_image[:]
+            self._slider_buffer = bytearray(len(self._prev_image))
             # Store image buffers of previous and nexy views and set display to invoke manager's frame buffer source when painting
             self.current.display.set_external_framer(self.render_sliding_view)
         return prev
