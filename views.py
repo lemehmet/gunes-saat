@@ -194,10 +194,10 @@ class Manager:
         # Make sure display returns its real image buffer
         self.current.display.set_external_framer(None)
         self.paint()
-        self._prev_image[:] = self.current.display.get_vraw_image()
+        self._prev_image = self.current.display.get_vraw_image()
         self._set_current(target)
         self.paint()
-        self._next_image[:] = self.current.display.get_vraw_image()
+        self._next_image = self.current.display.get_vraw_image()
         self._slider_buffer = bytearray(len(self._prev_image))
         # Store image buffers of previous and nexy views and set display to invoke manager's frame buffer source when painting
         self.current.display.set_external_framer(self._render_sliding_view)
