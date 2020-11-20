@@ -34,7 +34,7 @@ This small paperweight makes all the difference, it turns the bed frame to a spe
     * Install libraries for building Pillow: `sudo apt-get install libjpeg-dev libtiff-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev`
     * Clone the fork `git clone https://github.com/lemehmet/Pillow.git`
     * Change to the project directory `sudo pip3 install .`    
-* Fork/Clone the saat project `git clone https://lemehmet@bitbucket.org/lemehmet/gunes-saat.git
+* Fork/Clone the saat project `git clone https://github.com/lemehmet/gunes-saat.git`
 
 ## Wiring
 * Before wiring make sure every component works.
@@ -225,8 +225,8 @@ class RicoBall(View):
 the same method with`repeated=True`. This helps quick action, such as resizing the ball in the above example.  
 
 #### Navigation
-Each view keeps a reference to their first degree neighbors, up, down, left, and right. If a direction is not set, 
-or set to None, it is considered empty. The view manager handles the navigation events. Whenever Button-C is pressed 
+Each view keeps a reference to its first degree neighbors, up, down, left, and right. If a direction is not set, 
+or set to `None`, it is considered empty. The view manager handles the navigation events. Whenever Button-C is pressed 
 the framework goes into the navigation mode and stays in nav-mode until Button-C is pressed again. In the nav-mode,
 direction buttons are used to select the next view, when a direction key is pressed if a neighbor is defined for that 
 direction, the framework changes the active view and performs a simple sliding animation. The old and new views' 
